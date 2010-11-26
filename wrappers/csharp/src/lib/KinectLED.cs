@@ -80,7 +80,7 @@ namespace LibFreenect
 		/// </param>
 		private void SetLEDColor(ColorOption color)
 		{
-			int result = KinectNative.freenect_set_led(this.parentDevice.devicePointer, (int)color);
+			int result = KinectNative.freenect_set_led(this.parentDevice.devicePointer, color);
 			if(result != 0)
 			{
 				throw new Exception("Could not set color to " + color + ". Error Code:" + result);

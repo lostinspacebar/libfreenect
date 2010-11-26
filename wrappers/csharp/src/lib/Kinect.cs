@@ -69,6 +69,15 @@ namespace LibFreenect
 		}
 		
 		/// <summary>
+		/// Gets the Motor instance for this Kinect device
+		/// </summary>
+		public KinectMotor Motor
+		{
+			get;
+			private set;
+		}
+		
+		/// <summary>
 		/// Constructor
 		/// </summary>
 		/// <param name="id">
@@ -110,6 +119,7 @@ namespace LibFreenect
 			
 			// Create child instances
 			this.LED = new KinectLED(this);
+			this.Motor = new KinectMotor(this);
 		}
 		
 		/// <summary>
@@ -125,6 +135,7 @@ namespace LibFreenect
 			
 			// Dispose of child instances
 			this.LED = null;
+			this.Motor = null;
 		}
 		
 		/// <summary>

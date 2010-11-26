@@ -72,6 +72,18 @@ namespace ConsoleTest
 					Thread.Sleep(3000);
 				}
 				
+				// Try to control motor
+				Console.WriteLine(" - Motor Testing");
+				Console.WriteLine("\t - Setting tilt to 31 (should face all the way up)");
+				k.Motor.Tilt = 31;
+				Thread.Sleep(3000);
+				Console.WriteLine("\t - Setting tilt to -31 (should face all the way down)");
+				k.Motor.Tilt = -31;
+				Thread.Sleep(3000);
+				Console.WriteLine("\t - Setting tilt to 0 (should be back level)");
+				k.Motor.Tilt = 0;
+				Thread.Sleep(3000);
+				
 				// Close device
 				Console.Write(" - Closing device 0...");
 				k.Close();

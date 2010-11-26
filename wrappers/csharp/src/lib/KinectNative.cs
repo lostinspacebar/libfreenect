@@ -101,7 +101,10 @@ namespace LibFreenect
 		public static extern int freenect_close_device(IntPtr device);
 		
 		[DllImport("libfreenect")]
-		public static extern int freenect_set_led(IntPtr device, int option);
+		public static extern int freenect_set_led(IntPtr device, KinectLED.ColorOption option);
+		
+		[DllImport("libfreenect")]
+		public static extern int freenect_set_tilt_degs(IntPtr device, double angle);
 	}
 	
 	/// <summary>

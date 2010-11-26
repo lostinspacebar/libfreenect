@@ -35,7 +35,66 @@ namespace LibFreenect
 	/// 
 	public class KinectMotor
 	{
+		/// <summary>
+		/// Parent Kinect instance
+		/// </summary>
+		private Kinect parentDevice;
 		
+		/// <summary>
+		/// Current tilt angle of the motor
+		/// </summary>
+		private double tilt;
+		
+		/// <summary>
+		/// Gets or sets the tilt angle of the motor on the Kinect device.
+		/// Accepted values are [-31, 31] in 1 degree increments
+		/// </summary>
+		/// <value>Gets or sets 'tilt' field</value>
+		public double Tilt
+		{
+			get
+			{
+				return this.tilt;
+			}
+			set
+			{
+				this.SetMotorTilt(value);
+			}
+		}
+		
+		/// <summary>
+		/// Constructor
+		/// </summary>
+		/// <param name="parent">
+		/// Parent <see cref="Kinect"/> device that this Motor is part of
+		/// </param>
+		internal KinectMotor(Kinect parent)
+		{
+			this.parentDevice = parent;
+			
+			// Set tilt to 0 to start
+			this.Tilt = 0;
+		}
+		
+		/// <summary>
+		/// Sets the motor's tilt angle.
+		/// </summary>
+		/// <param name="value">
+		/// Value between -31 and 31
+		/// </param>
+		private void SetMotorTilt(double angle)
+		{
+			if(angle < -31 || angle > 31)
+			{
+				throw new ArgumentOutOfRangeException("Motor tilt has to be in the range [-31, 31]");
+			}
+			int result = KinectNative.freenect_set_tilt_degs(this.parentDevice.devicePointer, angle);
+			if(result != 0)
+			{
+				throw new Exception("Coult not set motor tilt angle to " + angle + ". Error Code: " + result);
+			}
+			this.tilt = angle;
+		}
 	}
 }
 
