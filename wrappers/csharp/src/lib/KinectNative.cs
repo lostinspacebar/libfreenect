@@ -25,6 +25,7 @@
  */
 
 using System;
+using System.Runtime.InteropServices;
 
 namespace LibFreenect
 {
@@ -36,7 +37,91 @@ namespace LibFreenect
 	/// 
 	class KinectNative
 	{
+		/// <summary>
+		/// Main freenect context. There is one per session.
+		/// </summary>
+		private static IntPtr freenectContext = IntPtr.Zero;
+		
+		/// <summary>
+		/// Gets a freenect context to work with.
+		/// </summary>
+		public static IntPtr Context
+		{
+			get
+			{
+				// Make sure we have a context
+				if(KinectNative.freenectContext == IntPtr.Zero)
+				{
+					KinectNative.InitializeContext();
+				}
+				
+				// Return it
+				return KinectNative.freenectContext;
+			}
+		}
+		
+		/// <summary>
+		/// Shuts down the context and closes any open devices.
+		/// </summary>
+		public static void ShutdownContext()
+		{
+			int result = KinectNative.freenect_shutdown(KinectNative.freenectContext);
+			if(result != 0)
+			{
+				throw new Exception("Could not shutdown freenect context. Error Code:" + result);
+			}
+			KinectNative.freenectContext = IntPtr.Zero;
+		}
+		
+		/// <summary>
+		/// Initializes the freenect context
+		/// </summary>
+		private static void InitializeContext()
+		{
+			int result = KinectNative.freenect_init(ref KinectNative.freenectContext, IntPtr.Zero);
+			if(result != 0)
+			{
+				throw new Exception("Could not initialize freenect context. Error Code:" + result);
+			}
+		}
+
+		[DllImport("libfreenect")]
+		public static extern int freenect_init(ref IntPtr context, IntPtr freenectUSBContext);
+		
+		[DllImport("libfreenect")]
+		public static extern int freenect_shutdown(IntPtr context);
+		
+		[DllImport("libfreenect")]
+		public static extern int freenect_num_devices(IntPtr context);
 		
 	}
+	
+	/// <summary>
+	/// Logging levels from the C library
+	/// </summary>
+	enum FreenectLogLevel
+	{
+		FREENECT_LOG_FATAL = 0,
+		FREENECT_LOG_ERROR,
+		FREENECT_LOG_WARNING,
+		FREENECT_LOG_NOTICE,
+		FREENECT_LOG_INFO,
+		FREENECT_LOG_DEBUG,
+		FREENECT_LOG_SPEW,
+		FREENECT_LOG_FLOOD,
+	}
+	
+	/// <summary>
+	/// Callback for freelect library logging
+	/// </summary>
+	delegate void FreenectLogCallback(out IntPtr context, FreenectLogLevel logLevel, string message);
+	
+	/// <summary>
+	/// Callback for depth data
+	/// </summary>
+	delegate void FreenectDepthDataCallback(out IntPtr device, IntPtr depthData, Int32 timestamp);
+	
+	//typedef void (*freenect_depth_cb)(freenect_device *dev, void *depth, uint32_t timestamp);
+	//typedef void (*freenect_rgb_cb)(freenect_device *dev, freenect_pixel *rgb, uint32_t timestamp);
+	
 }
-

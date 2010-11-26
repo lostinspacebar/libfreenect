@@ -25,6 +25,7 @@
  */
 
 using System;
+using LibFreenect;
 
 namespace ConsoleTest
 {
@@ -43,7 +44,15 @@ namespace ConsoleTest
 		/// </param>
 		public static void Main (string[] args)
 		{
-			Console.WriteLine ("Hello World!");
+			Console.WriteLine("----------------------------------------");
+			Console.WriteLine("| Kinect.NET Wrapper Test              |");
+			Console.WriteLine("----------------------------------------\n");
+			
+			// Try to get number of devices connected
+			Console.WriteLine(" - Device Count: " + Kinect.DeviceCount);
+			
+			// Shutdown the Kinect context
+			Kinect.Shutdown();
 		}
 	}
 }

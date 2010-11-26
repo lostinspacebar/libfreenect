@@ -24,6 +24,7 @@
  * either License.
  */
 using System;
+using System.Runtime.InteropServices;
 
 namespace LibFreenect
 {
@@ -34,8 +35,7 @@ namespace LibFreenect
 	/// <author>Aditya Gaddam (adityagaddam@gmail.com)</author>
 	/// 
 	public class Kinect
-	{
-		
+	{		
 		/// <summary>
 		/// Constructor
 		/// </summary>
@@ -44,6 +44,13 @@ namespace LibFreenect
 		/// </param>
 		public Kinect(int id)
 		{
+			// Make sure id is under DeviceCount
+			if(id >= Kinect.DeviceCount)
+			{
+				throw new ArgumentOutOfRangeException("The device ID has to be in the range [0, Kinect.DeviceCount - 1]");
+			}
+			
+			// All good
 			
 		}
 		
@@ -59,15 +66,28 @@ namespace LibFreenect
 		}
 		
 		/// <summary>
-		/// Gets the number of Kinect devices connected (Support function for the DeviceCount property)
+		/// Shuts down the Kinect.NET library and closes any open devices.
 		/// </summary>
+		public static void Shutdown()
+		{
+			KinectNative.ShutdownContext();
+		}
+		
+		/// <summary>
+		/// Gets the number of Kinect devices connected 
+		/// </summary>
+		/// <remarks>
+		/// This is just a support function for the Kinect.DeviceCount property
+		/// </remarks>
 		/// <returns>
 		/// Number of Kinect devices connected.
 		/// </returns>
 		private static int GetDeviceCount()
-		{
-			return 1;
+		{		
+			// Now we can just return w/e native method puts out
+			return KinectNative.freenect_num_devices(KinectNative.Context);
 		}
+		
 	}
 }
 
