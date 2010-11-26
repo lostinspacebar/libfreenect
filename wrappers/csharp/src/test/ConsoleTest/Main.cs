@@ -25,6 +25,7 @@
  */
 
 using System;
+using System.Threading;
 using LibFreenect;
 
 namespace ConsoleTest
@@ -50,6 +51,30 @@ namespace ConsoleTest
 			
 			// Try to get number of devices connected
 			Console.WriteLine(" - Device Count: " + Kinect.DeviceCount);
+			
+			// Do more tests if there are devices present
+			if(Kinect.DeviceCount > 0)
+			{
+				// Try to open a device
+				Kinect k = new Kinect(0);
+				Console.Write(" - Opening device 0...");
+				k.Open();
+				Console.WriteLine("Done.");
+				
+				// Try to set LED colors
+				Console.WriteLine(" - Setting LED color to Yellow");
+				k.LED.Color = KinectLED.ColorOption.Yellow;
+				Thread.Sleep(3000);
+				
+				Console.WriteLine(" - Setting LED color to Blink Red/Yellow");
+				k.LED.Color = KinectLED.ColorOption.BlinkYellow;
+				Thread.Sleep(3000);
+				
+				// Close device
+				Console.Write(" - Closing device 0...");
+				k.Close();
+				Console.WriteLine("Done.");
+			}
 			
 			// Shutdown the Kinect context
 			Kinect.Shutdown();

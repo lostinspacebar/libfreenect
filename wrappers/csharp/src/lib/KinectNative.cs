@@ -94,32 +94,30 @@ namespace LibFreenect
 		[DllImport("libfreenect")]
 		public static extern int freenect_num_devices(IntPtr context);
 		
+		[DllImport("libfreenect")]
+		public static extern int freenect_open_device(IntPtr context, ref IntPtr device, int index);
+		
+		[DllImport("libfreenect")]
+		public static extern int freenect_close_device(IntPtr device);
+		
+		[DllImport("libfreenect")]
+		public static extern int freenect_set_led(IntPtr device, KinectLED.ColorOption option);
 	}
 	
 	/// <summary>
-	/// Logging levels from the C library
+	/// "Native" callback for freelect library logging
 	/// </summary>
-	enum FreenectLogLevel
-	{
-		FREENECT_LOG_FATAL = 0,
-		FREENECT_LOG_ERROR,
-		FREENECT_LOG_WARNING,
-		FREENECT_LOG_NOTICE,
-		FREENECT_LOG_INFO,
-		FREENECT_LOG_DEBUG,
-		FREENECT_LOG_SPEW,
-		FREENECT_LOG_FLOOD,
-	}
+	delegate void FreenectLogCallback(out IntPtr context, Kinect.LoggingLevel logLevel, string message);
 	
 	/// <summary>
-	/// Callback for freelect library logging
-	/// </summary>
-	delegate void FreenectLogCallback(out IntPtr context, FreenectLogLevel logLevel, string message);
-	
-	/// <summary>
-	/// Callback for depth data
+	/// "Native" callback for depth data
 	/// </summary>
 	delegate void FreenectDepthDataCallback(out IntPtr device, IntPtr depthData, Int32 timestamp);
+	
+	/// <summary>
+	/// "Native" callback for RGB image data
+	/// </summary>
+	delegate void FreenectRGBDataCallback(out IntPtr device, IntPtr rgbData, Int32 timestamp);
 	
 	//typedef void (*freenect_depth_cb)(freenect_device *dev, void *depth, uint32_t timestamp);
 	//typedef void (*freenect_rgb_cb)(freenect_device *dev, freenect_pixel *rgb, uint32_t timestamp);

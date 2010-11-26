@@ -35,7 +35,39 @@ namespace LibFreenect
 	/// <author>Aditya Gaddam (adityagaddam@gmail.com)</author>
 	/// 
 	public class Kinect
-	{		
+	{
+		/// <summary>
+		/// Pointer to native device object
+		/// </summary>
+		internal IntPtr devicePointer = IntPtr.Zero;
+		
+		/// <summary>
+		/// Gets the device ID for this Kinect device
+		/// </summary>
+		public int DeviceID
+		{
+			get;
+			private set;
+		}
+		
+		/// <summary>
+		/// Gets whether the connection to the device is open
+		/// </summary>
+		public bool IsOpen
+		{
+			get;
+			private set;
+		}
+		
+		/// <summary>
+		/// Gets the LED on this Kinect device
+		/// </summary>
+		public KinectLED LED
+		{
+			get;
+			private set;
+		}
+		
 		/// <summary>
 		/// Constructor
 		/// </summary>
@@ -50,8 +82,8 @@ namespace LibFreenect
 				throw new ArgumentOutOfRangeException("The device ID has to be in the range [0, Kinect.DeviceCount - 1]");
 			}
 			
-			// All good
-			
+			// Store device ID for later
+			this.DeviceID = id;
 		}
 		
 		/// <value>
@@ -63,6 +95,36 @@ namespace LibFreenect
 			{
 				return Kinect.GetDeviceCount();
 			}
+		}
+		
+		/// <summary>
+		/// Opens up the connection to this Kinect device
+		/// </summary>
+		public void Open()
+		{
+			int result = KinectNative.freenect_open_device(KinectNative.Context, ref this.devicePointer, this.DeviceID);
+			if(result != 0)
+			{
+				throw new Exception("Could not open connection to Kinect Device (ID=" + this.DeviceID + "). Error Code = " + result);
+			}
+			
+			// Create child instances
+			this.LED = new KinectLED(this);
+		}
+		
+		/// <summary>
+		/// Closes the connection to this Kinect device
+		/// </summary>
+		public void Close()
+		{
+			int result = KinectNative.freenect_close_device(this.devicePointer);
+			if(result != 0)
+			{
+				throw new Exception("Could not close connection to Kinect Device (ID=" + this.DeviceID + "). Error Code = " + result);
+			}
+			
+			// Dispose of child instances
+			this.LED = null;
 		}
 		
 		/// <summary>
@@ -86,6 +148,21 @@ namespace LibFreenect
 		{		
 			// Now we can just return w/e native method puts out
 			return KinectNative.freenect_num_devices(KinectNative.Context);
+		}
+		
+		/// <summary>
+		/// Logging levels from the C library
+		/// </summary>
+		public enum LoggingLevel
+		{
+			Fatal = 0,
+			Error,
+			Warning,
+			Notice,
+			Info,
+			Debug,
+			Spew,
+			Flood,
 		}
 		
 	}

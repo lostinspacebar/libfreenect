@@ -35,7 +35,72 @@ namespace LibFreenect
 	/// 
 	public class KinectLED
 	{
+		/// <summary>
+		/// Parent Kinect instance
+		/// </summary>
+		private Kinect parentDevice;
 		
+		/// <summary>
+		/// Current color set on the LED
+		/// </summary>
+		private ColorOption color;
+		
+		/// <summary>
+		/// Gets or sets the LED color on the Kinect device
+		/// </summary>
+		/// <value>Gets or sets 'color' field</value>
+		public ColorOption Color
+		{
+			get
+			{
+				return this.color;
+			}
+			set
+			{
+				this.SetLEDColor(value);
+			}
+		}
+		
+		/// <summary>
+		/// Constructor
+		/// </summary>
+		/// <param name="parent">
+		/// Parent <see cref="Kinect"/> device that this LED is part of
+		/// </param>
+		internal KinectLED(Kinect parent)
+		{
+			this.parentDevice = parent;
+		}
+		
+		/// <summary>
+		/// Sets the color for the LED on the Kinect.
+		/// </summary>
+		/// <param name="color">
+		/// Color value in KinectLED.ColorOption. 
+		/// </param>
+		private void SetLEDColor(ColorOption color)
+		{
+			int result = KinectNative.freenect_set_led(this.parentDevice.devicePointer, color);
+			if(result != 0)
+			{
+				throw new Exception("Could not set color to " + color + ". Error Code:" + result);
+			}
+			this.color = color;	
+		}
+		
+		/// <summary>
+		/// LED colors. None means LED is off.
+		/// </summary>
+		public enum ColorOption
+		{
+			None    		= 0,
+			Green  			= 1,
+			Red    			= 2,
+			Yellow 			= 3,
+			BlinkYellow 	= 4,
+			BlinkGreen 		= 5,
+			BlinkRedYellow	= 6
+		}
 	}
 }
 
