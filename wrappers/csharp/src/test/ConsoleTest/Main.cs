@@ -62,13 +62,15 @@ namespace ConsoleTest
 				Console.WriteLine("Done.");
 				
 				// Try to set LED colors
-				Console.WriteLine(" - Setting LED color to Yellow");
-				k.LED.Color = KinectLED.ColorOption.Yellow;
-				Thread.Sleep(3000);
-				
-				Console.WriteLine(" - Setting LED color to Blink Red/Yellow");
-				k.LED.Color = KinectLED.ColorOption.BlinkYellow;
-				Thread.Sleep(3000);
+				Console.WriteLine(" - LED Testing");
+				string[] colors = Enum.GetNames(typeof(KinectLED.ColorOption));
+				foreach(string color in colors)
+				{
+					var c = (KinectLED.ColorOption)Enum.Parse(typeof(KinectLED.ColorOption), color);
+					Console.WriteLine("\t - Setting LED to Color: " + color);
+					k.LED.Color = c;
+					Thread.Sleep(3000);
+				}
 				
 				// Close device
 				Console.Write(" - Closing device 0...");
