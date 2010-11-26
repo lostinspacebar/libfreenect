@@ -79,7 +79,7 @@ namespace LibFreenect
 		/// <summary>
 		/// Sets the motor's tilt angle.
 		/// </summary>
-		/// <param name="value">
+		/// <param name="angle">
 		/// Value between -31 and 31
 		/// </param>
 		private void SetMotorTilt(double angle)
