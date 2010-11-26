@@ -105,6 +105,9 @@ namespace LibFreenect
 		
 		[DllImport("libfreenect")]
 		public static extern int freenect_set_tilt_degs(IntPtr device, double angle);
+		
+		[DllImport("libfreenect")]
+		public static extern int freenect_get_mks_accel(IntPtr device, out double x, out double y, out double z);
 	}
 	
 	/// <summary>

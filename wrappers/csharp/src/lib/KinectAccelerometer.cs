@@ -29,11 +29,11 @@ using System;
 namespace LibFreenect
 {
 	/// <summary>
-	/// Provides control over the Motor on the Kinect
+	/// Provides data from the accelerometer on the Kinect device
 	/// </summary>
 	/// <author>Aditya Gaddam (adityagaddam@gmail.com)</author>
 	/// 
-	public class KinectMotor
+	public class KinectAccelerometer
 	{
 		/// <summary>
 		/// Parent Kinect instance
@@ -41,61 +41,58 @@ namespace LibFreenect
 		private Kinect parentDevice;
 		
 		/// <summary>
-		/// Current tilt angle of the motor
+		/// Gets the X axis value on the accelerometer
 		/// </summary>
-		private double tilt;
-		
-		/// <summary>
-		/// Gets or sets the tilt angle of the motor on the Kinect device.
-		/// Accepted values are [-1.0, 1.0].
-		/// </summary>
-		/// <value>Gets or sets 'tilt' field</value>
-		public double Tilt
+		public double X
 		{
-			get
-			{
-				return this.tilt;
-			}
-			set
-			{
-				this.SetMotorTilt(value);
-			}
+			get;
+			private set;
+		}
+		
+		// <summary>
+		/// Gets the Y axis value on the accelerometer
+		/// </summary>
+		public double Y
+		{
+			get;
+			private set;
+		}
+		
+		// <summary>
+		/// Gets the Z axis value on the accelerometer
+		/// </summary>
+		public double Z
+		{
+			get;
+			private set;
 		}
 		
 		/// <summary>
 		/// Constructor
 		/// </summary>
 		/// <param name="parent">
-		/// Parent <see cref="Kinect"/> device that this Motor is part of
+		/// Parent <see cref="Kinect"/> device that this accelerometer is part of
 		/// </param>
-		internal KinectMotor(Kinect parent)
+		internal KinectAccelerometer(Kinect parent)
 		{
 			this.parentDevice = parent;
-			
-			// Set tilt to 0 to start
-			this.Tilt = 0;
 		}
 		
 		/// <summary>
-		/// Sets the motor's tilt angle.
+		/// Update values. This is called by the parent device before being returned.
 		/// </summary>
-		/// <param name="angle">
-		/// Value between [-1.0, 1.0]
-		/// </param>
-		private void SetMotorTilt(double angle)
+		internal void Update()
 		{
-			if(angle < -1.0 || angle > 1.0)
-			{
-				throw new ArgumentOutOfRangeException("Motor tilt has to be in the range [-1.0, 1.0]");
-			}
+			double x, y, z;
 			
-			double angleReal = Math.Round(angle * 31);
-			int result = KinectNative.freenect_set_tilt_degs(this.parentDevice.devicePointer, angleReal);
-			if(result != 0)
+			int result = KinectNative.freenect_get_mks_accel(this.parentDevice.devicePointer, out x, out y, out z);
+			if(result != 10)
 			{
-				throw new Exception("Coult not set motor tilt angle to " + angle + ". Error Code: " + result);
+				throw new Exception("Could not get MKS Accelerometer values. Error Code: " + result);	
 			}
-			this.tilt = angle;
+			this.X = x;
+			this.Y = y;
+			this.Z = z;
 		}
 	}
 }

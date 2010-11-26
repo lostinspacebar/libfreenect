@@ -74,11 +74,11 @@ namespace ConsoleTest
 				
 				// Try to control motor
 				Console.WriteLine(" - Motor Testing");
-				Console.WriteLine("\t - Setting tilt to 31 (should face all the way up)");
-				k.Motor.Tilt = 31;
+				Console.WriteLine("\t - Setting tilt to 1 (should face all the way up)");
+				k.Motor.Tilt = 1;
 				Thread.Sleep(3000);
-				Console.WriteLine("\t - Setting tilt to -31 (should face all the way down)");
-				k.Motor.Tilt = -31;
+				Console.WriteLine("\t - Setting tilt to -1 (should face all the way down)");
+				k.Motor.Tilt = -1;
 				Thread.Sleep(3000);
 				Console.WriteLine("\t - Setting tilt to 0 (should be back level)");
 				k.Motor.Tilt = 0;

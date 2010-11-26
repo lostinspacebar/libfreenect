@@ -42,6 +42,11 @@ namespace LibFreenect
 		internal IntPtr devicePointer = IntPtr.Zero;
 		
 		/// <summary>
+		/// Accelerometer instance
+		/// </summary>
+		private KinectAccelerometer accelerometer;
+		
+		/// <summary>
 		/// Gets the device ID for this Kinect device
 		/// </summary>
 		public int DeviceID
@@ -78,6 +83,18 @@ namespace LibFreenect
 		}
 		
 		/// <summary>
+		/// Gets the accelerometer for this Kinect device
+		/// </summary>
+		public KinectAccelerometer Accelerometer
+		{
+			get
+			{
+				this.accelerometer.Update();
+				return this.accelerometer;
+			}
+		}
+		
+		/// <summary>
 		/// Constructor
 		/// </summary>
 		/// <param name="id">
@@ -85,7 +102,7 @@ namespace LibFreenect
 		/// </param>
 		public Kinect(int id)
 		{
-			// Make sure id is under DeviceCount
+			// Make sure id is under  DeviceCount
 			if(id >= Kinect.DeviceCount)
 			{
 				throw new ArgumentOutOfRangeException("The device ID has to be in the range [0, Kinect.DeviceCount - 1]");
@@ -120,6 +137,7 @@ namespace LibFreenect
 			// Create child instances
 			this.LED = new KinectLED(this);
 			this.Motor = new KinectMotor(this);
+			this.accelerometer = new KinectAccelerometer(this);
 		}
 		
 		/// <summary>
@@ -136,6 +154,7 @@ namespace LibFreenect
 			// Dispose of child instances
 			this.LED = null;
 			this.Motor = null;
+			this.accelerometer = new KinectAccelerometer(this);
 		}
 		
 		/// <summary>

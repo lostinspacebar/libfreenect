@@ -52,6 +52,9 @@
     <Compile Include="..\KinectMotor.cs">
       <Link>KinectMotor.cs</Link>
     </Compile>
+    <Compile Include="..\KinectAccelerometer.cs">
+      <Link>KinectAccelerometer.cs</Link>
+    </Compile>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
 </Project>
