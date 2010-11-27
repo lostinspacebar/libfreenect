@@ -29,11 +29,11 @@ using System;
 namespace LibFreenect
 {
 	/// <summary>
-	/// Provides control over the LED on the Kinect
+	/// Provides control over the Motor on the Kinect
 	/// </summary>
 	/// <author>Aditya Gaddam (adityagaddam@gmail.com)</author>
 	/// 
-	public class KinectLED
+	public class Motor
 	{
 		/// <summary>
 		/// Parent Kinect instance
@@ -41,23 +41,24 @@ namespace LibFreenect
 		private Kinect parentDevice;
 		
 		/// <summary>
-		/// Current color set on the LED
+		/// Current tilt angle of the motor
 		/// </summary>
-		private ColorOption color;
+		private double tilt;
 		
 		/// <summary>
-		/// Gets or sets the LED color on the Kinect device
+		/// Gets or sets the tilt angle of the motor on the Kinect device.
+		/// Accepted values are [-1.0, 1.0].
 		/// </summary>
-		/// <value>Gets or sets 'color' field</value>
-		public ColorOption Color
+		/// <value>Gets or sets 'tilt' field</value>
+		public double Tilt
 		{
 			get
 			{
-				return this.color;
+				return this.tilt;
 			}
 			set
 			{
-				this.SetLEDColor(value);
+				this.SetMotorTilt(value);
 			}
 		}
 		
@@ -65,41 +66,36 @@ namespace LibFreenect
 		/// Constructor
 		/// </summary>
 		/// <param name="parent">
-		/// Parent <see cref="Kinect"/> device that this LED is part of
+		/// Parent <see cref="Kinect"/> device that this Motor is part of
 		/// </param>
-		internal KinectLED(Kinect parent)
+		internal Motor(Kinect parent)
 		{
 			this.parentDevice = parent;
+			
+			// Set tilt to 0 to start
+			this.Tilt = 0;
 		}
 		
 		/// <summary>
-		/// Sets the color for the LED on the Kinect.
+		/// Sets the motor's tilt angle.
 		/// </summary>
-		/// <param name="color">
-		/// Color value in KinectLED.ColorOption. 
+		/// <param name="angle">
+		/// Value between [-1.0, 1.0]
 		/// </param>
-		private void SetLEDColor(ColorOption color)
+		private void SetMotorTilt(double angle)
 		{
-			int result = KinectNative.freenect_set_led(this.parentDevice.devicePointer, color);
+			if(angle < -1.0 || angle > 1.0)
+			{
+				throw new ArgumentOutOfRangeException("Motor tilt has to be in the range [-1.0, 1.0]");
+			}
+			
+			double angleReal = Math.Round(angle * 31);
+			int result = KinectNative.freenect_set_tilt_degs(this.parentDevice.devicePointer, angleReal);
 			if(result != 0)
 			{
-				throw new Exception("Could not set color to " + color + ". Error Code:" + result);
+				throw new Exception("Coult not set motor tilt angle to " + angle + ". Error Code: " + result);
 			}
-			this.color = color;	
-		}
-		
-		/// <summary>
-		/// LED colors. None means LED is off.
-		/// </summary>
-		public enum ColorOption
-		{
-			None    		= 0,
-			Green  			= 1,
-			Red    			= 2,
-			Yellow 			= 3,
-			BlinkYellow 	= 4,
-			BlinkGreen 		= 5,
-			BlinkRedYellow	= 6
+			this.tilt = angle;
 		}
 	}
 }

@@ -25,6 +25,8 @@
  */
 
 using System;
+using System.Threading;
+using System.Collections.Generic;
 using System.Runtime.InteropServices;
 
 namespace LibFreenect
@@ -38,9 +40,20 @@ namespace LibFreenect
 	class KinectNative
 	{
 		/// <summary>
+		/// A little thread we will spawn to keep calling "process_events" so 
+		/// pending events on the USB are handled properly
+		/// </summary>
+		private static Thread processEventsThread;
+		
+		/// <summary>
 		/// Main freenect context. There is one per session.
 		/// </summary>
 		private static IntPtr freenectContext = IntPtr.Zero;
+		
+		/// <summary>
+		/// Map between native pointers to actual Kinect devices
+		/// </summary>
+		private static Dictionary<IntPtr, Kinect> deviceMap = new Dictionary<IntPtr, Kinect>();
 		
 		/// <summary>
 		/// Gets a freenect context to work with.
@@ -65,12 +78,66 @@ namespace LibFreenect
 		/// </summary>
 		public static void ShutdownContext()
 		{
+			// Shutdown context
 			int result = KinectNative.freenect_shutdown(KinectNative.freenectContext);
 			if(result != 0)
 			{
 				throw new Exception("Could not shutdown freenect context. Error Code:" + result);
 			}
+			
+			// Dispose pointer
 			KinectNative.freenectContext = IntPtr.Zero;
+		}
+		
+		/// <summary>
+		/// Gets a kinect device given it's native pointer. This is 
+		/// useful for callbacks.
+		/// </summary>
+		/// <param name="pointer">
+		/// A <see cref="IntPtr"/>
+		/// </param>
+		/// <returns>
+		/// A <see cref="Kinect"/>
+		/// </returns>
+		public static Kinect GetDevice(IntPtr pointer)
+		{
+			if(KinectNative.deviceMap.ContainsKey(pointer) == false)
+			{
+				return null;
+			}
+			return KinectNative.deviceMap[pointer];
+		}
+		
+		/// <summary>
+		/// Registers a device and its native pointer
+		/// </summary>
+		/// <param name="pointer">
+		/// A <see cref="IntPtr"/>
+		/// </param>
+		/// <param name="device">
+		/// A <see cref="Kinect"/>
+		/// </param>
+		public static void RegisterDevice(IntPtr pointer, Kinect device)
+		{
+			if(KinectNative.deviceMap.ContainsKey(pointer))
+			{
+				KinectNative.deviceMap.Remove(pointer);
+			}
+			KinectNative.deviceMap.Add(pointer, device);
+		}
+		
+		/// <summary>
+		/// Unregister the device pointed to by the specified native pointer.
+		/// </summary>
+		/// <param name="pointer">
+		/// A <see cref="IntPtr"/>
+		/// </param>
+		public static void UnregisterDevice(IntPtr pointer)
+		{
+			if(KinectNative.deviceMap.ContainsKey(pointer))
+			{
+				KinectNative.deviceMap.Remove(pointer);
+			}
 		}
 		
 		/// <summary>
@@ -83,10 +150,22 @@ namespace LibFreenect
 			{
 				throw new Exception("Could not initialize freenect context. Error Code:" + result);
 			}
+			
+			// Set callbacks for logging
+			KinectNative.freenect_set_log_callback(KinectNative.freenectContext, new FreenectLogCallback(Kinect.LogCallback));
 		}
 
 		[DllImport("libfreenect")]
 		public static extern int freenect_init(ref IntPtr context, IntPtr freenectUSBContext);
+		
+		[DllImport("libfreenect")]
+		public static extern int freenect_process_events(IntPtr context);
+		
+		[DllImport("libfreenect")]
+		public static extern void freenect_set_log_level(IntPtr context, Kinect.LogLevelOptions level);
+		
+		[DllImport("libfreenect")]
+		public static extern void freenect_set_log_callback(IntPtr context, FreenectLogCallback callback);
 		
 		[DllImport("libfreenect")]
 		public static extern int freenect_shutdown(IntPtr context);
@@ -101,31 +180,52 @@ namespace LibFreenect
 		public static extern int freenect_close_device(IntPtr device);
 		
 		[DllImport("libfreenect")]
-		public static extern int freenect_set_led(IntPtr device, KinectLED.ColorOption option);
+		public static extern int freenect_set_led(IntPtr device, LED.ColorOption option);
 		
 		[DllImport("libfreenect")]
 		public static extern int freenect_set_tilt_degs(IntPtr device, double angle);
 		
 		[DllImport("libfreenect")]
 		public static extern int freenect_get_mks_accel(IntPtr device, out double x, out double y, out double z);
+		
+		[DllImport("libfreenect")]
+		public static extern int freenect_set_rgb_format(IntPtr device, RGBCamera.DataFormatOptions rgbFormat);
+		
+		[DllImport("libfreenect")]
+		public static extern void freenect_set_rgb_callback(IntPtr device, FreenectRGBDataCallback callback);
+		
+		[DllImport("libfreenect")]
+		public static extern int freenect_start_rgb(IntPtr device);
+		
+		[DllImport("libfreenect")]
+		public static extern int freenect_stop_rgb(IntPtr device);
+		
+		[DllImport("libfreenect")]
+		public static extern int freenect_set_depth_format(IntPtr device, DepthCamera.DataFormatOptions depthFormat);
+		
+		[DllImport("libfreenect")]
+		public static extern void freenect_set_depth_callback(IntPtr device, FreenectDepthDataCallback callback);
+		
+		[DllImport("libfreenect")]
+		public static extern int freenect_start_depth(IntPtr device);
+		
+		[DllImport("libfreenect")]
+		public static extern int freenect_stop_depth(IntPtr device);
 	}
 	
 	/// <summary>
 	/// "Native" callback for freelect library logging
 	/// </summary>
-	delegate void FreenectLogCallback(out IntPtr context, Kinect.LoggingLevel logLevel, string message);
+	delegate void FreenectLogCallback(IntPtr device, Kinect.LogLevelOptions logLevel, string message);
 	
 	/// <summary>
 	/// "Native" callback for depth data
 	/// </summary>
-	delegate void FreenectDepthDataCallback(out IntPtr device, IntPtr depthData, Int32 timestamp);
+	delegate void FreenectDepthDataCallback(IntPtr device, [MarshalAs(UnmanagedType.LPArray, SizeConst=307200)] UInt16[] depthData, Int32 timestamp);
 	
 	/// <summary>
 	/// "Native" callback for RGB image data
 	/// </summary>
-	delegate void FreenectRGBDataCallback(out IntPtr device, IntPtr rgbData, Int32 timestamp);
-	
-	//typedef void (*freenect_depth_cb)(freenect_device *dev, void *depth, uint32_t timestamp);
-	//typedef void (*freenect_rgb_cb)(freenect_device *dev, freenect_pixel *rgb, uint32_t timestamp);
+	delegate void FreenectRGBDataCallback(IntPtr device, IntPtr imageData, Int32 timestamp);
 	
 }

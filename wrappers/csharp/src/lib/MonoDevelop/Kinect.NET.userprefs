@@ -1,11 +1,12 @@
 ﻿<Properties>
   <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" ctype="Workspace" />
-  <MonoDevelop.Ide.Workbench ActiveDocument="../KinectMotor.cs" ctype="Workbench">
+  <MonoDevelop.Ide.Workbench ActiveDocument="../KinectNative.cs" ctype="Workbench">
     <Files>
-      <File FileName="../Kinect.cs" Line="88" Column="28" />
-      <File FileName="../KinectNative.cs" Line="108" Column="3" />
-      <File FileName="../KinectLED.cs" Line="49" Column="54" />
-      <File FileName="../KinectMotor.cs" Line="75" Column="29" />
+      <File FileName="../Accelerometer.cs" Line="118" Column="4" />
+      <File FileName="../KinectNative.cs" Line="145" Column="7" />
+      <File FileName="../RGBCamera.cs" Line="26" Column="1" />
+      <File FileName="../Kinect.cs" Line="117" Column="10" />
+      <File FileName="../LogEventArgs.cs" Line="83" Column="24" />
     </Files>
   </MonoDevelop.Ide.Workbench>
   <MonoDevelop.Ide.DebuggingService.Breakpoints>

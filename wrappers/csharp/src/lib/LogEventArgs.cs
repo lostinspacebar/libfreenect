@@ -29,71 +29,62 @@ using System;
 namespace LibFreenect
 {
 	/// <summary>
-	/// Provides data from the accelerometer on the Kinect device
+	/// Delegate for Kinect.Log event
+	/// </summary>
+	public delegate void LogEventHandler(object sender, LogEventArgs e);
+	
+	/// <summary>
+	/// Log event data
 	/// </summary>
 	/// <author>Aditya Gaddam (adityagaddam@gmail.com)</author>
 	/// 
-	public class KinectAccelerometer
+	public class LogEventArgs
 	{
 		/// <summary>
-		/// Parent Kinect instance
+		/// Gets the Kinect device this log item originated from
 		/// </summary>
-		private Kinect parentDevice;
+		public Kinect Device
+		{
+			get;
+			set;
+		}
 		
 		/// <summary>
-		/// Gets the X axis value on the accelerometer
+		/// Gets the timestamp for this log item. This is done on the C# 
+		/// side and does not mean it was SENT EXACTLY at the specified 
+		/// time from the Kinect low level library.
 		/// </summary>
-		public double X
-		{
-			get;
-			private set;
-		}
-		
-		// <summary>
-		/// Gets the Y axis value on the accelerometer
-		/// </summary>
-		public double Y
-		{
-			get;
-			private set;
-		}
-		
-		// <summary>
-		/// Gets the Z axis value on the accelerometer
-		/// </summary>
-		public double Z
+		public DateTime Timestamp
 		{
 			get;
 			private set;
 		}
 		
 		/// <summary>
-		/// Constructor
+		/// Gets the logging level the library it set to
 		/// </summary>
-		/// <param name="parent">
-		/// Parent <see cref="Kinect"/> device that this accelerometer is part of
-		/// </param>
-		internal KinectAccelerometer(Kinect parent)
+		public Kinect.LogLevelOptions LogLevel
 		{
-			this.parentDevice = parent;
+			get;
+			private set;
 		}
 		
 		/// <summary>
-		/// Update values. This is called by the parent device before being returned.
+		/// Gets the log item text
 		/// </summary>
-		internal void Update()
+		public string Message
 		{
-			double x, y, z;
-			
-			int result = KinectNative.freenect_get_mks_accel(this.parentDevice.devicePointer, out x, out y, out z);
-			if(result != 10)
-			{
-				throw new Exception("Could not get MKS Accelerometer values. Error Code: " + result);	
-			}
-			this.X = x;
-			this.Y = y;
-			this.Z = z;
+			get;
+			private set;
 		}
+		
+		public LogEventArgs(Kinect device, Kinect.LogLevelOptions logLevel, string message)
+		{
+			this.Device = device;
+			this.LogLevel = logLevel;
+			this.Message = message;
+		}
+		
 	}
 }
 

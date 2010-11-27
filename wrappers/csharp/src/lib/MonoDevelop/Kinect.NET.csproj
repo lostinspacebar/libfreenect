@@ -20,6 +20,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <ConsolePause>false</ConsolePause>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>none</DebugType>
@@ -28,9 +29,11 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <ConsolePause>false</ConsolePause>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
+    <Reference Include="System.Drawing" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AssemblyInfo.cs" />
@@ -40,20 +43,26 @@
     <Compile Include="..\KinectNative.cs">
       <Link>KinectNative.cs</Link>
     </Compile>
-    <Compile Include="..\KinectLED.cs">
-      <Link>KinectLED.cs</Link>
+    <Compile Include="..\RGBCamera.cs">
+      <Link>RGBCamera.cs</Link>
     </Compile>
-    <Compile Include="..\KinectDepthCamera.cs">
-      <Link>KinectDepthCamera.cs</Link>
+    <Compile Include="..\Motor.cs">
+      <Link>Motor.cs</Link>
     </Compile>
-    <Compile Include="..\KinectRGBCamera.cs">
-      <Link>KinectRGBCamera.cs</Link>
+    <Compile Include="..\LED.cs">
+      <Link>LED.cs</Link>
     </Compile>
-    <Compile Include="..\KinectMotor.cs">
-      <Link>KinectMotor.cs</Link>
+    <Compile Include="..\DepthCamera.cs">
+      <Link>DepthCamera.cs</Link>
     </Compile>
-    <Compile Include="..\KinectAccelerometer.cs">
-      <Link>KinectAccelerometer.cs</Link>
+    <Compile Include="..\Accelerometer.cs">
+      <Link>Accelerometer.cs</Link>
+    </Compile>
+    <Compile Include="..\LogEventArgs.cs">
+      <Link>LogEventArgs.cs</Link>
+    </Compile>
+    <Compile Include="..\DepthMap.cs">
+      <Link>DepthMap.cs</Link>
     </Compile>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />

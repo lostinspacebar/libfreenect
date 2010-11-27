@@ -37,14 +37,35 @@ namespace LibFreenect
 	public class Kinect
 	{
 		/// <summary>
+		/// Current logging level for the kinect session (for all devices)
+		/// </summary>
+		private static LogLevelOptions logLevel;
+		
+		/// <summary>
 		/// Pointer to native device object
 		/// </summary>
 		internal IntPtr devicePointer = IntPtr.Zero;
 		
 		/// <summary>
-		/// Accelerometer instance
+		/// Gets or sets the logging level for the Kinect library. This controls
+		/// how much debugging information is sent to the logging callback
 		/// </summary>
-		private KinectAccelerometer accelerometer;
+		public static LogLevelOptions LogLevel
+		{
+			get
+			{
+				return Kinect.logLevel;
+			}
+			set
+			{
+				Kinect.SetLogLevel(value);
+			}
+		}
+		
+		/// <summary>
+		/// Raised when a log item is received from the low level Kinect library.
+		/// </summary>
+		public static event LogEventHandler Log = delegate { };
 		
 		/// <summary>
 		/// Gets the device ID for this Kinect device
@@ -67,7 +88,7 @@ namespace LibFreenect
 		/// <summary>
 		/// Gets the LED on this Kinect device
 		/// </summary>
-		public KinectLED LED
+		public LED LED
 		{
 			get;
 			private set;
@@ -76,7 +97,7 @@ namespace LibFreenect
 		/// <summary>
 		/// Gets the Motor instance for this Kinect device
 		/// </summary>
-		public KinectMotor Motor
+		public Motor Motor
 		{
 			get;
 			private set;
@@ -85,13 +106,43 @@ namespace LibFreenect
 		/// <summary>
 		/// Gets the accelerometer for this Kinect device
 		/// </summary>
-		public KinectAccelerometer Accelerometer
+		public Accelerometer Accelerometer
 		{
-			get
-			{
-				this.accelerometer.Update();
-				return this.accelerometer;
-			}
+			get;
+			private set;
+		}
+		
+		/// <summary>
+		/// Gets the RGB camera for this Kinect device
+		/// </summary>
+		public RGBCamera RGBCamera
+		{
+			get;
+			private set;
+		}
+		
+		/// <summary>
+		/// Gets the depth camera for this Kinect device
+		/// </summary>
+		public DepthCamera DepthCamera
+		{
+			get;
+			private set;
+		}
+		
+		/// <summary>
+		/// Gets or sets the name for this Kinect Device. 
+		/// </summary>
+		/// <remarks>
+		/// This means nothing at all to the actual library, but can be useful for 
+		/// debugging/presentation reasons. The default value is "Device {Kinect.DeviceID}" 
+		/// without the curly braces. For example, "Device 0" or "Device 1". 
+		/// But you can make it whatever the hell you want.
+		/// </remarks>
+		public string Name
+		{
+			get;
+			set;
 		}
 		
 		/// <summary>
@@ -135,9 +186,14 @@ namespace LibFreenect
 			}
 			
 			// Create child instances
-			this.LED = new KinectLED(this);
-			this.Motor = new KinectMotor(this);
-			this.accelerometer = new KinectAccelerometer(this);
+			this.LED = new LED(this);
+			this.Motor = new Motor(this);
+			this.Accelerometer = new Accelerometer(this);
+			this.RGBCamera = new RGBCamera(this);
+			this.DepthCamera = new DepthCamera(this);
+			
+			//Register the device
+			KinectNative.RegisterDevice(this.devicePointer, this);
 		}
 		
 		/// <summary>
@@ -154,7 +210,12 @@ namespace LibFreenect
 			// Dispose of child instances
 			this.LED = null;
 			this.Motor = null;
-			this.accelerometer = new KinectAccelerometer(this);
+			this.Accelerometer = null;
+			this.RGBCamera = null;
+			this.DepthCamera = null;
+			
+			// Unegister the device
+			KinectNative.UnregisterDevice(this.devicePointer);
 		}
 		
 		/// <summary>
@@ -163,6 +224,11 @@ namespace LibFreenect
 		public static void Shutdown()
 		{
 			KinectNative.ShutdownContext();
+		}
+		
+		public static void ProcessEvents()
+		{
+			KinectNative.freenect_process_events(KinectNative.Context);
 		}
 		
 		/// <summary>
@@ -181,9 +247,39 @@ namespace LibFreenect
 		}
 		
 		/// <summary>
+		/// Sets the logging level for the Kinect session. Support function for Kinect.LogLevel property.
+		/// </summary>
+		/// <param name="level">
+		/// A <see cref="LogLevel"/>
+		/// </param>
+		private static void SetLogLevel(LogLevelOptions level)
+		{
+			KinectNative.freenect_set_log_level(KinectNative.Context, level);
+			Kinect.logLevel = level;
+		}
+		
+		/// <summary>
+		/// Logging callback.
+		/// </summary>
+		/// <param name="device">
+		/// A <see cref="IntPtr"/>
+		/// </param>
+		/// <param name="logLevel">
+		/// A <see cref="Kinect.LogLevelOptions"/>
+		/// </param>
+		/// <param name="message">
+		/// A <see cref="System.String"/>
+		/// </param>
+		internal static void LogCallback(IntPtr device, Kinect.LogLevelOptions logLevel, string message)
+		{
+			Kinect realDevice = KinectNative.GetDevice(device);
+			Kinect.Log(null, new LogEventArgs(realDevice, logLevel, message));
+		}
+		
+		/// <summary>
 		/// Logging levels from the C library
 		/// </summary>
-		public enum LoggingLevel
+		public enum LogLevelOptions
 		{
 			Fatal = 0,
 			Error,

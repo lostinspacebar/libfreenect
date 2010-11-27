@@ -29,13 +29,51 @@ using System;
 namespace LibFreenect
 {
 	/// <summary>
-	/// Provides access to the RGB camera on the Kinect
+	/// Represents a map of depth values from the DepthCamera
 	/// </summary>
 	/// <author>Aditya Gaddam (adityagaddam@gmail.com)</author>
 	/// 
-	public class KinectRGBCamera
-	{
+	public class DepthMap
+	{		
+		/// <summary>
+		/// Gets the width of the depth map
+		/// </summary>
+		public int Width
+		{
+			get;
+			private set;
+		}
 		
+		/// <summary>
+		/// Gets the height of the depth map
+		/// </summary>
+		public int Height
+		{
+			get;
+			private set;
+		}
+		
+		/// <summary>
+		/// Gets the raw data in the DepthMap. This data is in a 1-dimensional 
+		/// array so it's easy to work with in unsafe code.
+		/// </summary>
+		public UInt16[] Data;
+		
+		/// <summary>
+		/// Constructor
+		/// </summary>
+		/// <param name="width">
+		/// Width of the depth map
+		/// </param>
+		/// <param name="height">
+		/// Height of the depth map
+		/// </param>
+		public DepthMap(int width, int height)
+		{
+			this.Data = new UInt16[DepthCamera.depthDataSize];
+			this.Width = width;
+			this.Height = height;
+		}
 	}
 }
 
