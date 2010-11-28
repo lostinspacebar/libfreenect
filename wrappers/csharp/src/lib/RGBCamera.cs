@@ -149,27 +149,6 @@ namespace LibFreenect
 		}
 		
 		/// <summary>
-		/// Handle image data received from the camera
-		/// </summary>
-		/// <param name="imageData">
-		/// Unmanaged pointer to image data
-		/// </param>
-		/// <param name="timestamp">
-		/// Unix timestamp for teh image data received
-		/// </param>
-		private void HandleImageDataReceived(IntPtr imageData, Int32 timestamp)
-		{
-			// Convert image data to a Bitmap
-			Bitmap b = this.RGBtoBitmap(imageData);
-			
-			// UNIX timestamp -> Datetime
-			DateTime dateTime = new DateTime(1970, 1, 1, 0, 0, 0, 0).AddSeconds(timestamp);
-			
-			// Raise event
-			this.DataReceived(null, new RGBCamera.DataReceivedEventArgs(dateTime, b));
-		}
-		
-		/// <summary>
 		/// Converts unmanaged 24bpp RGB data to a Bitmap for C# consumption
 		/// </summary>
 		/// <param name="imageData">
@@ -178,7 +157,7 @@ namespace LibFreenect
 		/// <returns>
 		/// Bitmap version of the RGB data
 		/// </returns>
-		private Bitmap RGBtoBitmap(IntPtr imageData)
+		private static Bitmap RGBtoBitmap(IntPtr imageData)
 		{
 			Bitmap bmp = new Bitmap(640, 480, PixelFormat.Format24bppRgb);
 			BitmapData bmpData = bmp.LockBits(new Rectangle(0, 0, 640, 480), ImageLockMode.WriteOnly, System.Drawing.Imaging.PixelFormat.Format24bppRgb);
@@ -189,9 +168,9 @@ namespace LibFreenect
 				int i;
 				for(i = 0; i < RGBCamera.rgbFormatSize; i += 3)
 				{
-					dest[i] = src[i + 2];
-					dest[i + 1] = src[i + 1];
-					dest[i + 2] = src[i];
+					*dest++ = src[i + 2];
+					*dest++ = src[i + 1];
+					*dest++ = src[i];
 				}
 			}
 			bmp.UnlockBits(bmpData);
@@ -207,7 +186,7 @@ namespace LibFreenect
 		/// <returns>
 		/// A <see cref="Bitmap"/>
 		/// </returns>
-		private Bitmap BayerToBitmap(IntPtr imageData)
+		private static Bitmap BayerToBitmap(IntPtr imageData)
 		{
 			throw new NotImplementedException("Bayer format for teh RGB camera isn't done yet. But coming soon!");
 		}
@@ -227,8 +206,26 @@ namespace LibFreenect
 		/// </param>
 		private static void HandleDataReceived(IntPtr device, IntPtr imageData, Int32 timestamp)
 		{
+			// Get the device this is for from pointer
 			Kinect realDevice = KinectNative.GetDevice(device);
-			realDevice.RGBCamera.HandleImageDataReceived(imageData, timestamp);
+			
+			// Convert image data to a Bitmap
+			Bitmap b = null;
+			switch(realDevice.RGBCamera.DataFormat)
+			{
+			case DataFormatOptions.RGB:
+				b = RGBtoBitmap(imageData);
+				break;
+			case DataFormatOptions.Bayer:
+				b = BayerToBitmap(imageData);
+				break;
+			}
+			
+			// UNIX timestamp -> Datetime
+			DateTime dateTime = new DateTime(1970, 1, 1, 0, 0, 0, 0).AddSeconds(timestamp);
+			
+			// Raise event
+			realDevice.RGBCamera.DataReceived(realDevice, new RGBCamera.DataReceivedEventArgs(dateTime, b));
 		}
 		
 		/// <summary>

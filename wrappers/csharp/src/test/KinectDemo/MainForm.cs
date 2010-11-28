@@ -38,7 +38,21 @@ namespace GUITest
 		// Kinect Object
 		private Kinect kinect;
 		
-		private int imgSize = 640 * 480;
+		// W/e this gamma shit is from the glview example
+		private UInt16[] gamma = new UInt16[2048];	
+		
+		// Just a simple optimization. Dont need to do this multiply every time;
+		private const int imgSize = 640 * 480;
+		
+		/// <summary>
+		/// Stuff for FPS counters
+		/// </summary>
+		private int depthFrameCount = 0;
+		private int rgbFrameCount = 0;
+		private DateTime depthLastFrame = DateTime.Now;
+		private DateTime rgbLastFrame = DateTime.Now;
+		private int depthFPS = 0;
+		private int rgbFPS = 0;
 		
 		/// <summary>
 		/// Constructor
@@ -47,6 +61,13 @@ namespace GUITest
 		{
 			// Initialize GUI Elements
 			this.InitializeComponents();
+			
+			for (int i = 0 ; i < 2048; i++) 
+			{
+				double v = i / 2048.0;
+				v = Math.Pow((double)v, 3.0) * 6.0;
+				gamma[i] = (UInt16)(v * 6.0 * 256.0);
+			}
 			
 			// Check for kinect devices
 			if(Kinect.DeviceCount == 0)
@@ -87,6 +108,16 @@ namespace GUITest
 			
 			// Start RGB camera
 			this.kinect.RGBCamera.DataReceived += delegate(object sender, RGBCamera.DataReceivedEventArgs e) {
+				if((DateTime.Now - this.rgbLastFrame).TotalMilliseconds >= 1000)
+				{
+					this.rgbFPS = this.rgbFrameCount;
+					this.rgbFrameCount = 0;
+					this.rgbLastFrame = DateTime.Now;
+				}
+				else
+				{
+					this.rgbFrameCount++;
+				}
 				this.rgbPanel.Image = e.Image;
 			};
 			this.kinect.RGBCamera.Start();
@@ -94,6 +125,16 @@ namespace GUITest
 			// Start depth camera
 			this.kinect.DepthCamera.DataReceived += delegate(object sender, DepthCamera.DataReceivedEventArgs e) {
 				
+				if((DateTime.Now - this.depthLastFrame).TotalMilliseconds >= 1000)
+				{
+					this.depthFPS = this.depthFrameCount;
+					this.depthFrameCount = 0;
+					this.depthLastFrame = DateTime.Now;
+				}
+				else
+				{
+					this.depthFrameCount++;
+				}
 				Bitmap bmp = new Bitmap(640, 480, System.Drawing.Imaging.PixelFormat.Format24bppRgb);
 				BitmapData bmpData = bmp.LockBits(new Rectangle(0, 0, 640, 480), ImageLockMode.WriteOnly, System.Drawing.Imaging.PixelFormat.Format24bppRgb);
 				unsafe
@@ -104,7 +145,7 @@ namespace GUITest
 						
 						for(int i = 0; i < imgSize; i++)
 						{
-							ushort s = src[i];
+							ushort s = gamma[src[i]];
 							int lb = s & 0xff;
 							switch(s >> 8)
 							{
@@ -231,6 +272,9 @@ namespace GUITest
 			{
 				return;
 			}
+			
+			this.Text = "FPS(RGB):" + this.rgbFPS + "   FPS(DEPTH):" + this.depthFPS;
+			
 			this.motorTiltStatusLabel.Text = "Motor Tilt: " + this.kinect.Motor.Tilt.ToString();
 			Accelerometer.Values acc = this.kinect.Accelerometer.MKS;
 			

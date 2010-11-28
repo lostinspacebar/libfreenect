@@ -34,7 +34,26 @@ namespace LibFreenect
 	/// <author>Aditya Gaddam (adityagaddam@gmail.com)</author>
 	/// 
 	public class DepthMap
-	{		
+	{
+		
+		/// <summary>
+		/// Returns the raw depth value (disparity) at the given x and y
+		/// position.
+		/// </summary>
+		/// <param name="x">
+		/// A <see cref="x"/>
+		/// </param>
+		/// <param name="y">
+		/// A <see cref="y"/>
+		/// </param>
+		public UInt16 this[int x, int y]
+		{
+			get
+			{
+				return this.Data[(y * 640) + x];
+			}
+		}
+		
 		/// <summary>
 		/// Gets the width of the depth map
 		/// </summary>
