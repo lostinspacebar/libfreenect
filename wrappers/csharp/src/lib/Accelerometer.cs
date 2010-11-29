@@ -41,6 +41,16 @@ namespace LibFreenect
 		private Kinect parentDevice;
 		
 		/// <summary>
+		/// Number of accelerometer counts per G
+		/// </summary>
+		private const double countsPerGravity = 819.0;
+	
+		/// <summary>
+		/// Gravity constant
+		/// </summary>
+		public const double Gravity = 9.80665;
+		
+		/// <summary>
 		/// Gets the X axis value on the accelerometer
 		/// </summary>
 		public double X
@@ -77,7 +87,7 @@ namespace LibFreenect
 		/// Returns raw accelerometer values. There are 819 values per G. Therefore
 		/// the range for this should be [410, 3686]
 		/// </summary>
-		public Values Raw
+		public RawValues Raw
 		{
 			get
 			{
@@ -111,17 +121,16 @@ namespace LibFreenect
 		/// Gets MKS accelerometer values. Support function for the KinectAccelerometer.MKS property.
 		/// </summary>
 		/// <returns>
-		/// <see cref="AccelerometerValues"/> with X, Y, Z populated with MKS accel readings.
+		/// <see cref="Accelerometer.Values"/> with X, Y, Z populated with MKS accel readings.
 		/// </returns>
 		private Values GetMKSAccelerometerValues()
 		{
 			Values values = new Values();
 			
-			int result = KinectNative.freenect_get_mks_accel(this.parentDevice.devicePointer, out values.X, out values.Y, out values.Z);
-			if(result != 10)
-			{
-				throw new Exception("Could not get MKS Accelerometer values. Error Code: " + result);	
-			}
+			// Calculate MKS
+			values.X = (double)this.Raw.X / countsPerGravity * Gravity;
+			values.Y = (double)this.Raw.Y / countsPerGravity * Gravity;
+			values.Z = (double)this.Raw.Z / countsPerGravity * Gravity;
 			
 			return values;
 		}
@@ -130,17 +139,30 @@ namespace LibFreenect
 		/// Gets raw accelerometer values. Support function for KinectAccelerometer.Raw property.
 		/// </summary>
 		/// <returns>
-		/// <see cref="AccelerometerValues"/> with X, Y, Z populated with Raw accel readings.
+		/// <see cref="Accelerometer.RawValues"/> with X, Y, Z populated with Raw accel readings.
 		/// </returns>
-		private Values GetRawAccelerometerValues()
+		private RawValues GetRawAccelerometerValues()
 		{
-			Values values = new Values();
+			RawValues values = new RawValues();
+			values.X = this.parentDevice.cachedDeviceState.AccelerometerX;
+			values.Y = this.parentDevice.cachedDeviceState.AccelerometerY;
+			values.Z = this.parentDevice.cachedDeviceState.AccelerometerZ;
 			
 			return values;
 		}
 		
 		/// <summary>
-		/// Set of accelerometer values.
+		/// Set of raw accelerometer count values
+		/// </summary>
+		public struct RawValues
+		{
+			public UInt16 X;
+			public UInt16 Y;
+			public UInt16 Z;
+		}
+		
+		/// <summary>
+		/// Set of MKS accelerometer values.
 		/// </summary>
 		public struct Values
 		{

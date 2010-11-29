@@ -40,12 +40,6 @@ namespace LibFreenect
 	class KinectNative
 	{
 		/// <summary>
-		/// A little thread we will spawn to keep calling "process_events" so 
-		/// pending events on the USB are handled properly
-		/// </summary>
-		private static Thread processEventsThread;
-		
-		/// <summary>
 		/// Main freenect context. There is one per session.
 		/// </summary>
 		private static IntPtr freenectContext = IntPtr.Zero;
@@ -186,9 +180,6 @@ namespace LibFreenect
 		public static extern int freenect_set_tilt_degs(IntPtr device, double angle);
 		
 		[DllImport("libfreenect")]
-		public static extern int freenect_get_mks_accel(IntPtr device, out double x, out double y, out double z);
-		
-		[DllImport("libfreenect")]
 		public static extern int freenect_set_rgb_format(IntPtr device, RGBCamera.DataFormatOptions rgbFormat);
 		
 		[DllImport("libfreenect")]
@@ -211,6 +202,24 @@ namespace LibFreenect
 		
 		[DllImport("libfreenect")]
 		public static extern int freenect_stop_depth(IntPtr device);
+		
+		[DllImport("libfreenect")]
+		public static extern int freenect_update_device_state(IntPtr device);
+		
+		[DllImport("libfreenect")]
+		public static extern FreenectDeviceState freenect_get_device_state(IntPtr device);
+	}
+	
+	/// <summary>
+	/// Device state values. This holds stuff like accel and tilt status
+	/// </summary>
+	internal struct FreenectDeviceState
+	{
+		public UInt16 					AccelerometerX;
+		public UInt16 					AccelerometerY;
+		public UInt16 					AccelerometerZ;
+		public SByte  					TiltAngle;
+		public Motor.TiltStatusOptions  TiltStatus;
 	}
 	
 	/// <summary>
@@ -221,11 +230,11 @@ namespace LibFreenect
 	/// <summary>
 	/// "Native" callback for depth data
 	/// </summary>
-	delegate void FreenectDepthDataCallback(IntPtr device, [MarshalAs(UnmanagedType.LPArray, SizeConst=307200)] UInt16[] depthData, Int32 timestamp);
+	delegate void FreenectDepthDataCallback(IntPtr device, [MarshalAs(UnmanagedType.LPArray, SizeConst=307200)] UInt16[] depthData, UInt32 timestamp);
 	
 	/// <summary>
 	/// "Native" callback for RGB image data
 	/// </summary>
-	delegate void FreenectRGBDataCallback(IntPtr device, IntPtr imageData, Int32 timestamp);
+	delegate void FreenectRGBDataCallback(IntPtr device, IntPtr imageData, UInt32 timestamp);
 	
 }

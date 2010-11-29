@@ -64,6 +64,9 @@
     <Compile Include="..\DepthMap.cs">
       <Link>DepthMap.cs</Link>
     </Compile>
+    <Compile Include="..\ImageMap.cs">
+      <Link>ImageMap.cs</Link>
+    </Compile>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
 </Project>

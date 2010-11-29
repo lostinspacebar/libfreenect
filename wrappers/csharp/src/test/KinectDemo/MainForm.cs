@@ -29,9 +29,10 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.Windows.Forms;
 using System.Runtime.InteropServices;
+using System.Threading;
 using LibFreenect;
 
-namespace GUITest
+namespace KinectDemo
 {
 	public class MainForm : Form
 	{
@@ -43,6 +44,9 @@ namespace GUITest
 		
 		// Just a simple optimization. Dont need to do this multiply every time;
 		private const int imgSize = 640 * 480;
+		
+		// Thread for updating status continuously
+		private Thread updateStatusThread;
 		
 		/// <summary>
 		/// Stuff for FPS counters
@@ -118,7 +122,7 @@ namespace GUITest
 				{
 					this.rgbFrameCount++;
 				}
-				this.rgbPanel.Image = e.Image;
+				
 			};
 			this.kinect.RGBCamera.Start();
 			
@@ -135,62 +139,7 @@ namespace GUITest
 				{
 					this.depthFrameCount++;
 				}
-				Bitmap bmp = new Bitmap(640, 480, System.Drawing.Imaging.PixelFormat.Format24bppRgb);
-				BitmapData bmpData = bmp.LockBits(new Rectangle(0, 0, 640, 480), ImageLockMode.WriteOnly, System.Drawing.Imaging.PixelFormat.Format24bppRgb);
-				unsafe
-				{
-					fixed(ushort *src = e.DepthMap.Data)
-					{
-						byte *dest = (byte *)bmpData.Scan0;
-						
-						for(int i = 0; i < imgSize; i++)
-						{
-							ushort s = gamma[src[i]];
-							int lb = s & 0xff;
-							switch(s >> 8)
-							{
-							case 0:
-								*dest++ = 255;
-								*dest++ = (byte)(255-lb);
-								*dest++ = (byte)(255-lb);
-								break;
-							case 1:
-								*dest++ = 255;
-								*dest++ = (byte)lb;
-								*dest++ = 0;
-								break;
-							case 2:
-								*dest++ = (byte)(255-lb);
-								*dest++ = 255;
-								*dest++ = 0;
-								break;
-							case 3:
-								*dest++ = 0;
-								*dest++ = 255;
-								*dest++ = (byte)lb;
-								break;
-							case 4:
-								*dest++ = 0;
-								*dest++ = (byte)(255-lb);
-								*dest++ = 255;
-								break;
-							case 5:
-								*dest++ = 0;
-								*dest++ = 0;
-								*dest++ = (byte)(255-lb);
-								break;
-							default:
-								*dest++ = 0;
-								*dest++ = 0;
-								*dest++ = 0;
-								break;
-							}
-						}
-					}
-				}
-				bmp.UnlockBits(bmpData);
-				this.depthPanel.Image = bmp;
-				
+							
 			};
 			this.kinect.DepthCamera.Start();
 			
@@ -200,10 +149,28 @@ namespace GUITest
 			
 			// Enable update timer
 			this.infoUpdateTimer.Enabled = true;
+			
+			// Start update status thread
+			this.updateStatusThread = new Thread(delegate()
+			{
+				while(true)
+				{
+					if(this.kinect == null)
+					{
+						continue;
+					}
+					this.kinect.UpdateStatus();
+				}
+			});
+			this.updateStatusThread.Start();
 		}
 		
 		private void Disconnect()
 		{
+			// Stop the update thread
+			this.updateStatusThread.Abort();
+			this.updateStatusThread = null;
+			
 			// Disable update timer first
 			this.infoUpdateTimer.Enabled = false;
 			
@@ -275,12 +242,11 @@ namespace GUITest
 			
 			this.Text = "FPS(RGB):" + this.rgbFPS + "   FPS(DEPTH):" + this.depthFPS;
 			
-			this.motorTiltStatusLabel.Text = "Motor Tilt: " + this.kinect.Motor.Tilt.ToString();
-			Accelerometer.Values acc = this.kinect.Accelerometer.MKS;
-			
-			this.accelXLabel.Text = "Accel X: " + acc.X.ToString();
-			this.accelYLabel.Text = "Accel Y: " + acc.Y.ToString();
-			this.accelZLabel.Text = "Accel Z: " + acc.Z.ToString();
+			this.kinect.UpdateStatus();
+			this.motorTiltStatusLabel.Text = "Motor Tilt: " + this.kinect.Motor.RawTilt.ToString();
+			this.accelXLabel.Text = "Accel X: " + this.kinect.Accelerometer.Raw.X;
+			this.accelYLabel.Text = "Accel Y: " + this.kinect.Accelerometer.Raw.Y;
+			this.accelZLabel.Text = "Accel Z: " + this.kinect.Accelerometer.Raw.Z;
 			Kinect.ProcessEvents();
 		}
 		
@@ -560,8 +526,8 @@ namespace GUITest
 			//
 			// infoUpdateTimer
 			//
-			this.infoUpdateTimer = new Timer();
-			this.infoUpdateTimer.Interval = 5;
+			this.infoUpdateTimer = new System.Windows.Forms.Timer();
+			this.infoUpdateTimer.Interval = 200;
 			this.infoUpdateTimer.Enabled = false;
 			this.infoUpdateTimer.Tick += delegate(object sender, EventArgs e) {
 				this.UpdateInfoPanel();
@@ -584,19 +550,7 @@ namespace GUITest
 			// Update
 			this.ResumeLayout(false);
 			this.PerformLayout();
-		}
-		
-		/// <summary>
-		/// Driver
-		/// </summary>
-		/// <param name="args">
-		/// A <see cref="System.String[]"/>
-		/// </param>
-		public static void Main (string[] args)
-		{
-			Application.Run(new MainForm());
-		}
-		
+		}		
 		
 		// GUI Elements
 		private ToolStrip mainToolbar;
@@ -621,6 +575,6 @@ namespace GUITest
 		private TableLayoutPanel mainLayoutPanel;
 		private Font headingFont;
 		private Font regularFont;
-		private Timer infoUpdateTimer;
+		private System.Windows.Forms.Timer infoUpdateTimer;
 	}
 }

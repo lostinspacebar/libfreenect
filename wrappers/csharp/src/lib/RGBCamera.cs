@@ -39,9 +39,9 @@ namespace LibFreenect
 	public class RGBCamera
 	{
 		/// <summary>
-		/// RGB format size
+		/// Depth format size
 		/// </summary>
-		internal static int rgbFormatSize = 640 * 480 * 3;
+		internal const int rgbDataSize = 640 * 480 * 3;
 		
 		/// <summary>
 		/// Parent Kinect instance
@@ -157,38 +157,27 @@ namespace LibFreenect
 		/// <returns>
 		/// Bitmap version of the RGB data
 		/// </returns>
-		private static Bitmap RGBtoBitmap(IntPtr imageData)
+		private static ImageMap RGBToImageMap(IntPtr imageData)
 		{
-			Bitmap bmp = new Bitmap(640, 480, PixelFormat.Format24bppRgb);
-			BitmapData bmpData = bmp.LockBits(new Rectangle(0, 0, 640, 480), ImageLockMode.WriteOnly, System.Drawing.Imaging.PixelFormat.Format24bppRgb);
+			ImageMap imageMap = new ImageMap(640, 480);
 			unsafe
 			{
-				byte *src = (byte *)imageData;
-				byte *dest = (byte *)bmpData.Scan0;
-				int i;
-				for(i = 0; i < RGBCamera.rgbFormatSize; i += 3)
-				{
-					*dest++ = src[i + 2];
-					*dest++ = src[i + 1];
-					*dest++ = src[i];
-				}
+				fixed (byte* pDst = imageMap.Data)
+		        {
+					byte* ps = (byte *)imageData;
+					byte* pd = pDst;
+					for (int i = 0 ; i < rgbDataSize ; i+=3)
+					{
+						*(pd) = *(ps + 2);
+						*(pd + 1) = *(ps + 1);
+						*(pd + 2) = *(ps);
+						pd += 3;
+						ps += 3;
+					}
+		        }
 			}
-			bmp.UnlockBits(bmpData);
-			return bmp;
-		}
-		
-		/// <summary>
-		/// Converts unmanaged Bayer image data to a Bitmap for C# consumption
-		/// </summary>
-		/// <param name="imageData">
-		/// A <see cref="IntPtr"/>
-		/// </param>
-		/// <returns>
-		/// A <see cref="Bitmap"/>
-		/// </returns>
-		private static Bitmap BayerToBitmap(IntPtr imageData)
-		{
-			throw new NotImplementedException("Bayer format for teh RGB camera isn't done yet. But coming soon!");
+			
+			return imageMap;
 		}
 		
 		/// <summary>
@@ -204,28 +193,27 @@ namespace LibFreenect
 		/// <param name="timestamp">
 		/// A <see cref="Int32"/>
 		/// </param>
-		private static void HandleDataReceived(IntPtr device, IntPtr imageData, Int32 timestamp)
+		private static void HandleDataReceived(IntPtr device, IntPtr imageData, UInt32 timestamp)
 		{
 			// Get the device this is for from pointer
 			Kinect realDevice = KinectNative.GetDevice(device);
-			
+
 			// Convert image data to a Bitmap
-			Bitmap b = null;
+			ImageMap imageMap = null;
 			switch(realDevice.RGBCamera.DataFormat)
 			{
 			case DataFormatOptions.RGB:
-				b = RGBtoBitmap(imageData);
+				RGBToImageMap(imageData);
 				break;
-			case DataFormatOptions.Bayer:
-				b = BayerToBitmap(imageData);
-				break;
+			default:
+				throw new NotImplementedException("Only RGB is implemented right now.");
 			}
-			
+
 			// UNIX timestamp -> Datetime
 			DateTime dateTime = new DateTime(1970, 1, 1, 0, 0, 0, 0).AddSeconds(timestamp);
-			
+
 			// Raise event
-			realDevice.RGBCamera.DataReceived(realDevice, new RGBCamera.DataReceivedEventArgs(dateTime, b));
+			realDevice.RGBCamera.DataReceived(realDevice, new RGBCamera.DataReceivedEventArgs(dateTime, imageMap));
 		}
 		
 		/// <summary>
@@ -259,13 +247,13 @@ namespace LibFreenect
 			/// <summary>
 			/// Gets the image data
 			/// </summary>
-			public Bitmap Image
+			public ImageMap Image
 			{
 				get;
 				private set;
 			}
 			
-			public DataReceivedEventArgs(DateTime timestamp, Bitmap b)
+			public DataReceivedEventArgs(DateTime timestamp, ImageMap b)
 			{
 				this.Timestamp = timestamp;
 				this.Image = b;

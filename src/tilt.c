@@ -76,6 +76,7 @@ int freenect_set_tilt_degs(freenect_device *dev, double angle)
 	angle = (angle<MIN_TILT_ANGLE) ? MIN_TILT_ANGLE : ((angle>MAX_TILT_ANGLE) ? MAX_TILT_ANGLE : angle);
 	angle = angle * 2;
 
+	printf("tilt=%f\n", angle);
 	ret = fnusb_control(&dev->usb_motor, 0x40, 0x31, (uint16_t)angle, 0x0, empty, 0x0);
 	return ret;
 }

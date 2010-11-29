@@ -155,7 +155,9 @@ namespace LibFreenect
 		
 		private static DepthMap CreateDepthMap10Bit(UInt16[] depthData)
 		{
-			throw new NotImplementedException("10 bit data not implemented yet. Soon though!");
+			DepthMap depthMap = new DepthMap(640, 480);
+			depthMap.Data = depthData;
+			return depthMap;
 		}
 		
 		private static DepthMap CreateDepthMapPacked11Bit(UInt16[] depthData)
@@ -181,7 +183,7 @@ namespace LibFreenect
 		/// <param name="timestamp">
 		/// A <see cref="Int32"/>
 		/// </param>
-		private static void HandleDataReceived(IntPtr device, UInt16[] depthData, Int32 timestamp)
+		private static void HandleDataReceived(IntPtr device, UInt16[] depthData, UInt32 timestamp)
 		{
 			Kinect realDevice = KinectNative.GetDevice(device);
 			DepthMap depthMap = null;

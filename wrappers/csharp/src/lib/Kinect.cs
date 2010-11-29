@@ -47,6 +47,12 @@ namespace LibFreenect
 		internal IntPtr devicePointer = IntPtr.Zero;
 		
 		/// <summary>
+		/// Cached device state that can be used after a call to Kinect.UpdateDeviceStatus
+		/// This can be used to save some USB or P/Invoke calls.
+		/// </summary>
+		internal FreenectDeviceState cachedDeviceState;
+		
+		/// <summary>
 		/// Gets or sets the logging level for the Kinect library. This controls
 		/// how much debugging information is sent to the logging callback
 		/// </summary>
@@ -219,6 +225,19 @@ namespace LibFreenect
 		}
 		
 		/// <summary>
+		/// Gets updated device status from the Kinect. This updates any properties in the 
+		/// child devices (Motor, LED, etc.)
+		/// </summary>
+		public void UpdateStatus()
+		{
+			// Ask for new device status
+			KinectNative.freenect_update_device_state(this.devicePointer);
+			
+			// Get updated device status
+			this.cachedDeviceState = KinectNative.freenect_get_device_state(this.devicePointer);
+		}
+		
+		/// <summary>
 		/// Shuts down the Kinect.NET library and closes any open devices.
 		/// </summary>
 		public static void Shutdown()
@@ -226,6 +245,9 @@ namespace LibFreenect
 			KinectNative.ShutdownContext();
 		}
 		
+		/// <summary>
+		/// Process any pending messages on the USB streams. This should be called every so often.
+		/// </summary>
 		public static void ProcessEvents()
 		{
 			KinectNative.freenect_process_events(KinectNative.Context);

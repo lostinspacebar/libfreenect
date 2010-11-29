@@ -38,6 +38,7 @@
     <Compile Include="..\MainForm.cs">
       <Link>MainForm.cs</Link>
     </Compile>
+    <Compile Include="Program.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="System.Drawing" />

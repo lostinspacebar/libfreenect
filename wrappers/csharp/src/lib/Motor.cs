@@ -46,15 +46,37 @@ namespace LibFreenect
 		private double tilt;
 		
 		/// <summary>
-		/// Gets or sets the tilt angle of the motor on the Kinect device.
-		/// Accepted values are [-1.0, 1.0].
+		/// Gets the commanded tilt value [-1.0, 1.0] for the motor. This is just the tilt
+		/// value that the motor was last asked to go to through Motor.Tilt. This doesn't 
+		/// correspond to the actual angle at the physical motor. For that value, see Motor.Tilt.
 		/// </summary>
-		/// <value>Gets or sets 'tilt' field</value>
-		public double Tilt
+		public double CommandedTilt
 		{
 			get
 			{
 				return this.tilt;
+			}
+		}
+		
+		public int RawTilt
+		{
+			get
+			{
+				return (int)this.parentDevice.cachedDeviceState.TiltAngle;
+			}
+		}
+		
+		/// <summary>
+		/// Gets or sets the tilt angle of the motor on the Kinect device.
+		/// Accepted values are [-1.0, 1.0]. When queried, this returns the ACTUAL
+		/// tilt value/status of the motor. To get the commanded tilt value after 
+		/// setting this value, you can use the Motor.CommandedTilt property.
+		/// </summary>
+		public double Tilt
+		{
+			get
+			{
+				return this.GetMotorTilt();
 			}
 			set
 			{
@@ -77,6 +99,17 @@ namespace LibFreenect
 		}
 		
 		/// <summary>
+		/// Gets the motor's actual tilt angle
+		/// </summary>
+		/// <returns>
+		/// Actual tilt angle of the motor as it's moving
+		/// </returns>
+		private double GetMotorTilt()
+		{
+			return (((double)this.parentDevice.cachedDeviceState.TiltAngle + 31.0) / 62.0) - 1.0;
+		}
+		
+		/// <summary>
 		/// Sets the motor's tilt angle.
 		/// </summary>
 		/// <param name="angle">
@@ -89,6 +122,7 @@ namespace LibFreenect
 				throw new ArgumentOutOfRangeException("Motor tilt has to be in the range [-1.0, 1.0]");
 			}
 			
+			Console.WriteLine("-");
 			double angleReal = Math.Round(angle * 31);
 			int result = KinectNative.freenect_set_tilt_degs(this.parentDevice.devicePointer, angleReal);
 			if(result != 0)
@@ -96,6 +130,16 @@ namespace LibFreenect
 				throw new Exception("Coult not set motor tilt angle to " + angle + ". Error Code: " + result);
 			}
 			this.tilt = angle;
+		}
+		
+		/// <summary>
+		/// Different states the tilt motor can be in operation
+		/// </summary>
+		public enum TiltStatusOptions
+		{
+			Stopped 	= 0x00,
+		 	AtLimit 	= 0x01,
+			Moving 		= 0x04
 		}
 	}
 }

@@ -1,21 +1,21 @@
 ﻿<Properties>
   <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug|x86" ctype="Workspace" />
-  <MonoDevelop.Ide.Workbench ActiveDocument="../MainForm.cs" ctype="Workbench">
+  <MonoDevelop.Ide.Workbench ActiveDocument="../../../lib/KinectNative.cs" ctype="Workbench">
     <Files>
-      <File FileName="../MainForm.cs" Line="123" Column="20" />
-      <File FileName="../../../lib/RGBCamera.cs" Line="110" Column="36" />
+      <File FileName="../MainForm.cs" Line="291" Column="4" />
+      <File FileName="../../../lib/RGBCamera.cs" Line="177" Column="15" />
       <File FileName="../../../lib/Kinect.cs" Line="203" Column="4" />
-      <File FileName="../../../lib/KinectNative.cs" Line="224" Column="110" />
-      <File FileName="../../../lib/DepthCamera.cs" Line="98" Column="27" />
-      <File FileName="../../../lib/DepthMap.cs" Line="73" Column="54" />
+      <File FileName="../../../lib/KinectNative.cs" Line="200" Column="3" />
+      <File FileName="../../../lib/DepthCamera.cs" Line="138" Column="10" />
+      <File FileName="../../../lib/DepthMap.cs" Line="55" Column="4" />
     </Files>
     <Pads>
       <Pad Id="ProjectPad">
         <State expanded="True">
-          <Node name="Kinect.NET" expanded="True" />
-          <Node name="KinectDemo" expanded="True">
-            <Node name="MainForm.cs" selected="True" />
+          <Node name="Kinect.NET" expanded="True">
+            <Node name="KinectNative.cs" selected="True" />
           </Node>
+          <Node name="KinectDemo" expanded="True" />
         </State>
       </Pad>
     </Pads>
