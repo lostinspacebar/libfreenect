@@ -31,6 +31,8 @@ using System.Windows.Forms;
 using System.Runtime.InteropServices;
 using System.Threading;
 using LibFreenect;
+using OpenTK;
+using OpenTK.Graphics.OpenGL;
 
 namespace KinectDemo
 {
@@ -81,7 +83,7 @@ namespace KinectDemo
 			else
 			{
 				Kinect.LogLevel = Kinect.LogLevelOptions.Warning;
-				//Kinect.Log += new LogEventHandler(HandleLogMessage);
+				Kinect.Log += new LogEventHandler(HandleLogMessage);
 				
 				// Atleast one connected, fill the select box with w/e devices available
 				for(int i = 0; i < Kinect.DeviceCount; i++)
@@ -139,7 +141,7 @@ namespace KinectDemo
 				{
 					this.depthFrameCount++;
 				}
-							
+						
 			};
 			this.kinect.DepthCamera.Start();
 			
@@ -159,7 +161,12 @@ namespace KinectDemo
 					{
 						continue;
 					}
+					
+					// Update the status for this device
 					this.kinect.UpdateStatus();
+					
+					// Let the kinect library handle any pending stuff on the usb streams.
+					Kinect.ProcessEvents();
 				}
 			});
 			this.updateStatusThread.Start();
@@ -243,11 +250,32 @@ namespace KinectDemo
 			this.Text = "FPS(RGB):" + this.rgbFPS + "   FPS(DEPTH):" + this.depthFPS;
 			
 			this.kinect.UpdateStatus();
-			this.motorTiltStatusLabel.Text = "Motor Tilt: " + this.kinect.Motor.RawTilt.ToString();
-			this.accelXLabel.Text = "Accel X: " + this.kinect.Accelerometer.Raw.X;
-			this.accelYLabel.Text = "Accel Y: " + this.kinect.Accelerometer.Raw.Y;
-			this.accelZLabel.Text = "Accel Z: " + this.kinect.Accelerometer.Raw.Z;
-			Kinect.ProcessEvents();
+			this.motorTiltStatusLabel.Text = "Tilt Status: " + this.kinect.Motor.TiltStatus.ToString();
+			this.motorTiltAngleLabel.Text = "Tilt Angle: " + this.kinect.Motor.Tilt.ToString();
+			this.accelXLabel.Text = "Accel X: " + Math.Round(this.kinect.Accelerometer.X, 3);
+			this.accelYLabel.Text = "Accel Y: " + Math.Round(this.kinect.Accelerometer.Y, 3);
+			this.accelZLabel.Text = "Accel Z: " + Math.Round(this.kinect.Accelerometer.Z, 3);
+		}
+		
+		/// <summary>
+		/// Load time config of the GL window
+		/// </summary>
+		private void ImagePanel_Load()
+		{
+			GL.ClearColor(Color.Blue);
+			GL.ClearDepth(1.0);
+			GL.DepthFunc(DepthFunction.Less);
+			GL.Disable(EnableCap.DepthTest);
+			
+			
+		}
+		
+		/// <summary>
+		/// Painting stuff in the GL window
+		/// </summary>
+		private void ImagePanel_Paint()
+		{
+			
 		}
 		
 		/// <summary>
@@ -365,6 +393,19 @@ namespace KinectDemo
 			this.topPanel.Margin = new Padding(0);
 			
 			//
+			// imagePanel
+			//
+			this.imagePanel = new GLControl();
+			this.imagePanel.Width = 1280;
+			this.imagePanel.Height = 480;
+			this.imagePanel.Load += delegate(object sender, EventArgs e) {
+				this.ImagePanel_Load();
+			};
+			this.imagePanel.Paint += delegate(object sender, PaintEventArgs e) {
+				this.ImagePanel_Paint();
+			};
+			
+			//
 			// ledControlLabel
 			//
 			this.ledControlLabel = new Label();
@@ -428,10 +469,20 @@ namespace KinectDemo
 			this.controlsPanel.Controls.Add(this.ledControlLabel);
 			
 			//
+			// motorTiltAngleLabel
+			//
+			this.motorTiltAngleLabel = new Label();
+			this.motorTiltAngleLabel.Text = "Tilt Angle: ";
+			this.motorTiltAngleLabel.AutoSize = true;
+			this.motorTiltAngleLabel.Dock = DockStyle.Top;
+			this.motorTiltAngleLabel.Font = this.headingFont;
+			this.motorTiltAngleLabel.BorderStyle = BorderStyle.None;
+			
+			//
 			// motorTiltStatusLabel
 			//
 			this.motorTiltStatusLabel = new Label();
-			this.motorTiltStatusLabel.Text = "Motor Tilt: ";
+			this.motorTiltStatusLabel.Text = "Tilt Status: ";
 			this.motorTiltStatusLabel.AutoSize = true;
 			this.motorTiltStatusLabel.Dock = DockStyle.Top;
 			this.motorTiltStatusLabel.Font = this.headingFont;
@@ -480,6 +531,7 @@ namespace KinectDemo
 			this.infoPanel.Controls.Add(this.accelZLabel, 1, 2);
 			this.infoPanel.Controls.Add(this.accelYLabel, 1, 1);
 			this.infoPanel.Controls.Add(this.accelXLabel, 1, 0);
+			this.infoPanel.Controls.Add(this.motorTiltAngleLabel, 0, 0);
 			this.infoPanel.Controls.Add(this.motorTiltStatusLabel, 0, 0);
 			this.infoPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50.0f));
 			this.infoPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50.0f));
@@ -560,6 +612,7 @@ namespace KinectDemo
 		private TableLayoutPanel topPanel;
 		private PictureBox rgbPanel;
 		private PictureBox depthPanel;
+		private GLControl imagePanel;
 		private TableLayoutPanel bottomPanel;
 		private Panel controlsPanel;
 		private Label ledControlLabel;
@@ -567,6 +620,7 @@ namespace KinectDemo
 		private Label motorControlLabel;
 		private TrackBar motorControlTrack;
 		private TableLayoutPanel infoPanel;
+		private Label motorTiltAngleLabel;
 		private Label motorTiltStatusLabel;
 		private Label accelXLabel;
 		private Label accelYLabel;

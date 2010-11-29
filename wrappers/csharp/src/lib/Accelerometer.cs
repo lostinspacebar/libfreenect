@@ -156,9 +156,9 @@ namespace LibFreenect
 		/// </summary>
 		public struct RawValues
 		{
-			public UInt16 X;
-			public UInt16 Y;
-			public UInt16 Z;
+			public Int16 X;
+			public Int16 Y;
+			public Int16 Z;
 		}
 		
 		/// <summary>

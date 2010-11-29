@@ -41,9 +41,9 @@ namespace LibFreenect
 		private Kinect parentDevice;
 		
 		/// <summary>
-		/// Current tilt angle of the motor
+		/// Current 
 		/// </summary>
-		private double tilt;
+		private double commandedTilt;
 		
 		/// <summary>
 		/// Gets the commanded tilt value [-1.0, 1.0] for the motor. This is just the tilt
@@ -54,10 +54,13 @@ namespace LibFreenect
 		{
 			get
 			{
-				return this.tilt;
+				return this.commandedTilt;
 			}
 		}
 		
+		/// <summary>
+		/// Gets the actual raw tilt value of the motor on the kinect.
+		/// </summary>
 		public int RawTilt
 		{
 			get
@@ -85,6 +88,17 @@ namespace LibFreenect
 		}
 		
 		/// <summary>
+		/// Gets the status of the tilt motor.
+		/// </summary>
+		public TiltStatusOptions TiltStatus
+		{
+			get
+			{
+				return this.parentDevice.cachedDeviceState.TiltStatus;
+			}
+		}
+		
+		/// <summary>
 		/// Constructor
 		/// </summary>
 		/// <param name="parent">
@@ -106,7 +120,7 @@ namespace LibFreenect
 		/// </returns>
 		private double GetMotorTilt()
 		{
-			return (((double)this.parentDevice.cachedDeviceState.TiltAngle + 31.0) / 62.0) - 1.0;
+			return (((double)this.parentDevice.cachedDeviceState.TiltAngle + 62.0) / 124.0) - 1.0;
 		}
 		
 		/// <summary>
@@ -117,19 +131,24 @@ namespace LibFreenect
 		/// </param>
 		private void SetMotorTilt(double angle)
 		{
+			// Check if value is in valid ranges
 			if(angle < -1.0 || angle > 1.0)
 			{
 				throw new ArgumentOutOfRangeException("Motor tilt has to be in the range [-1.0, 1.0]");
 			}
 			
-			Console.WriteLine("-");
-			double angleReal = Math.Round(angle * 31);
-			int result = KinectNative.freenect_set_tilt_degs(this.parentDevice.devicePointer, angleReal);
+			// Figure out raw angle between -31 and 31
+			double rawAngle = Math.Round(angle * 31);
+			
+			// Call native func.
+			int result = KinectNative.freenect_set_tilt_degs(this.parentDevice.devicePointer, rawAngle);
 			if(result != 0)
 			{
-				throw new Exception("Coult not set motor tilt angle to " + angle + ". Error Code: " + result);
+				throw new Exception("Coult not set raw motor tilt angle to " + angle + ". Error Code: " + result);
 			}
-			this.tilt = angle;
+			
+			// Save commanded tilt
+			this.commandedTilt = angle;
 		}
 		
 		/// <summary>

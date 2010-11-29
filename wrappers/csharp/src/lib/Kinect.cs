@@ -234,7 +234,8 @@ namespace LibFreenect
 			KinectNative.freenect_update_device_state(this.devicePointer);
 			
 			// Get updated device status
-			this.cachedDeviceState = KinectNative.freenect_get_device_state(this.devicePointer);
+			IntPtr ptr = KinectNative.freenect_get_device_state(this.devicePointer);
+			this.cachedDeviceState = (FreenectDeviceState)Marshal.PtrToStructure(ptr, typeof(FreenectDeviceState));
 		}
 		
 		/// <summary>

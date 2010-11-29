@@ -207,7 +207,7 @@ namespace LibFreenect
 		public static extern int freenect_update_device_state(IntPtr device);
 		
 		[DllImport("libfreenect")]
-		public static extern FreenectDeviceState freenect_get_device_state(IntPtr device);
+		public static extern IntPtr freenect_get_device_state(IntPtr device);
 	}
 	
 	/// <summary>
@@ -215,9 +215,9 @@ namespace LibFreenect
 	/// </summary>
 	internal struct FreenectDeviceState
 	{
-		public UInt16 					AccelerometerX;
-		public UInt16 					AccelerometerY;
-		public UInt16 					AccelerometerZ;
+		public Int16 					AccelerometerX;
+		public Int16 					AccelerometerY;
+		public Int16 					AccelerometerZ;
 		public SByte  					TiltAngle;
 		public Motor.TiltStatusOptions  TiltStatus;
 	}
