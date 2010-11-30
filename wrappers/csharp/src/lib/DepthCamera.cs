@@ -146,30 +146,6 @@ namespace LibFreenect
 			this.dataFormat = format;
 		}
 		
-		private static DepthMap CreateDepthMap11Bit(UInt16[] depthData)
-		{
-			DepthMap depthMap = new DepthMap(640, 480);
-			depthMap.Data = depthData;
-			return depthMap;
-		}
-		
-		private static DepthMap CreateDepthMap10Bit(UInt16[] depthData)
-		{
-			DepthMap depthMap = new DepthMap(640, 480);
-			depthMap.Data = depthData;
-			return depthMap;
-		}
-		
-		private static DepthMap CreateDepthMapPacked11Bit(UInt16[] depthData)
-		{
-			throw new NotImplementedException("Packed 11 bit data not implemented yet. Soon though!");
-		}
-		
-		private static DepthMap CreateDepthMapPacked10Bit(UInt16[] depthData)
-		{
-			throw new NotImplementedException("Packed 10 bit data not implemented yet. Soon though!");
-		}
-		
 		/// <summary>
 		/// Static callback for C function. This finds out which device the callback was meant for 
 		/// and calls that specific DepthCamera's depth data handler.
@@ -183,32 +159,9 @@ namespace LibFreenect
 		/// <param name="timestamp">
 		/// A <see cref="Int32"/>
 		/// </param>
-		private static void HandleDataReceived(IntPtr device, UInt16[] depthData, UInt32 timestamp)
+		private static void HandleDataReceived(IntPtr device, IntPtr depthData, UInt32 timestamp)
 		{
-			Kinect realDevice = KinectNative.GetDevice(device);
-			DepthMap depthMap = null;
 			
-			switch(realDevice.DepthCamera.DataFormat)
-			{
-			case DataFormatOptions.Format11Bit:
-				depthMap = CreateDepthMap11Bit(depthData);
-				break;
-			case DataFormatOptions.Format10Bit:
-				depthMap = CreateDepthMap10Bit(depthData);
-				break;
-			case DataFormatOptions.FormatPacked11Bit:
-				depthMap = CreateDepthMapPacked11Bit(depthData);
-				break;
-			case DataFormatOptions.FormatPacked10Bit:
-				depthMap = CreateDepthMapPacked10Bit(depthData);
-				break;
-			}
-			
-			// UNIX timestamp -> Datetime
-			DateTime dateTime = new DateTime(1970, 1, 1, 0, 0, 0, 0).AddSeconds(timestamp);
-			
-			// Raise event
-			realDevice.DepthCamera.DataReceived(realDevice, new DataReceivedEventArgs(dateTime, depthMap));
 		}
 		
 		/// <summary>

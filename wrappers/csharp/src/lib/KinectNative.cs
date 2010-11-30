@@ -180,16 +180,16 @@ namespace LibFreenect
 		public static extern int freenect_set_tilt_degs(IntPtr device, double angle);
 		
 		[DllImport("libfreenect")]
-		public static extern int freenect_set_rgb_format(IntPtr device, RGBCamera.DataFormatOptions rgbFormat);
+		public static extern int freenect_set_video_format(IntPtr device, VideoCamera.DataFormatOptions rgbFormat);
 		
 		[DllImport("libfreenect")]
-		public static extern void freenect_set_rgb_callback(IntPtr device, FreenectRGBDataCallback callback);
+		public static extern void freenect_set_video_callback(IntPtr device, FreenectVideoDataCallback callback);
 		
 		[DllImport("libfreenect")]
-		public static extern int freenect_start_rgb(IntPtr device);
+		public static extern int freenect_start_video(IntPtr device);
 		
 		[DllImport("libfreenect")]
-		public static extern int freenect_stop_rgb(IntPtr device);
+		public static extern int freenect_stop_video(IntPtr device);
 		
 		[DllImport("libfreenect")]
 		public static extern int freenect_set_depth_format(IntPtr device, DepthCamera.DataFormatOptions depthFormat);
@@ -204,16 +204,16 @@ namespace LibFreenect
 		public static extern int freenect_stop_depth(IntPtr device);
 		
 		[DllImport("libfreenect")]
-		public static extern int freenect_update_device_state(IntPtr device);
+		public static extern int freenect_update_tilt_state(IntPtr device);
 		
 		[DllImport("libfreenect")]
-		public static extern IntPtr freenect_get_device_state(IntPtr device);
+		public static extern IntPtr freenect_get_tilt_state(IntPtr device);
 	}
 	
 	/// <summary>
-	/// Device state values. This holds stuff like accel and tilt status
+	/// Device tilt state values. This holds stuff like accel and tilt status
 	/// </summary>
-	internal struct FreenectDeviceState
+	internal struct FreenectTiltState
 	{
 		public Int16 					AccelerometerX;
 		public Int16 					AccelerometerY;
@@ -230,11 +230,11 @@ namespace LibFreenect
 	/// <summary>
 	/// "Native" callback for depth data
 	/// </summary>
-	delegate void FreenectDepthDataCallback(IntPtr device, [MarshalAs(UnmanagedType.LPArray, SizeConst=307200)] UInt16[] depthData, UInt32 timestamp);
+	delegate void FreenectDepthDataCallback(IntPtr device, IntPtr depthData, UInt32 timestamp);
 	
 	/// <summary>
-	/// "Native" callback for RGB image data
+	/// "Native" callback for video image data
 	/// </summary>
-	delegate void FreenectRGBDataCallback(IntPtr device, IntPtr imageData, UInt32 timestamp);
+	delegate void FreenectVideoDataCallback(IntPtr device, IntPtr imageData, UInt32 timestamp);
 	
 }
