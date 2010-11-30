@@ -43,14 +43,14 @@ namespace LibFreenect
 		/// <summary>
 		/// Current 
 		/// </summary>
-		private double commandedTilt;
+		private float commandedTilt;
 		
 		/// <summary>
 		/// Gets the commanded tilt value [-1.0, 1.0] for the motor. This is just the tilt
 		/// value that the motor was last asked to go to through Motor.Tilt. This doesn't 
 		/// correspond to the actual angle at the physical motor. For that value, see Motor.Tilt.
 		/// </summary>
-		public double CommandedTilt
+		public float CommandedTilt
 		{
 			get
 			{
@@ -75,7 +75,7 @@ namespace LibFreenect
 		/// tilt value/status of the motor. To get the commanded tilt value after 
 		/// setting this value, you can use the Motor.CommandedTilt property.
 		/// </summary>
-		public double Tilt
+		public float Tilt
 		{
 			get
 			{
@@ -118,9 +118,13 @@ namespace LibFreenect
 		/// <returns>
 		/// Actual tilt angle of the motor as it's moving
 		/// </returns>
-		private double GetMotorTilt()
+		private float GetMotorTilt()
 		{
-			return (((double)this.parentDevice.cachedDeviceState.TiltAngle + 62.0) / 124.0) - 1.0;
+			if(this.parentDevice.cachedDeviceState.TiltAngle == -128)
+			{
+				return -2.0f;
+			}
+			return (float)this.parentDevice.cachedDeviceState.TiltAngle / 61.0f;
 		}
 		
 		/// <summary>
@@ -129,7 +133,7 @@ namespace LibFreenect
 		/// <param name="angle">
 		/// Value between [-1.0, 1.0]
 		/// </param>
-		private void SetMotorTilt(double angle)
+		private void SetMotorTilt(float angle)
 		{
 			// Check if value is in valid ranges
 			if(angle < -1.0 || angle > 1.0)

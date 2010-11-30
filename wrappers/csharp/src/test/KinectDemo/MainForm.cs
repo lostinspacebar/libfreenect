@@ -234,7 +234,7 @@ namespace KinectDemo
 			{
 				return;	
 			}
-			this.kinect.Motor.Tilt = (double)value / 100.0;
+			this.kinect.Motor.Tilt = (float)value / 100.0f;
 		}
 		
 		/// <summary>
@@ -250,8 +250,8 @@ namespace KinectDemo
 			this.Text = "FPS(RGB):" + this.rgbFPS + "   FPS(DEPTH):" + this.depthFPS;
 			
 			this.kinect.UpdateStatus();
-			this.motorTiltStatusLabel.Text = "Tilt Status: " + this.kinect.Motor.TiltStatus.ToString();
-			this.motorTiltAngleLabel.Text = "Tilt Angle: " + this.kinect.Motor.Tilt.ToString();
+			this.motorTiltStatusLabel.Text = "Tilt Status: " + this.kinect.Motor.TiltStatus;
+			this.motorTiltAngleLabel.Text = "Tilt Angle: " + this.kinect.Motor.Tilt;
 			this.accelXLabel.Text = "Accel X: " + Math.Round(this.kinect.Accelerometer.X, 3);
 			this.accelYLabel.Text = "Accel Y: " + Math.Round(this.kinect.Accelerometer.Y, 3);
 			this.accelZLabel.Text = "Accel Z: " + Math.Round(this.kinect.Accelerometer.Z, 3);

@@ -90,7 +90,6 @@ namespace LibFreenect
 		/// </param>
 		public ImageMap(int width, int height)
 		{
-			this.Data = new byte[RGBCamera.rgbDataSize];
 			this.Width = width;
 			this.Height = height;
 		}
