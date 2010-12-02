@@ -50,15 +50,31 @@ namespace KinectDemo
 		// Thread for updating status continuously
 		private Thread updateStatusThread;
 		
-		/// <summary>
-		/// Stuff for FPS counters
-		/// </summary>
+		// Stuff for FPS counters
 		private int depthFrameCount = 0;
-		private int rgbFrameCount = 0;
+		private int videoFrameCount = 0;
 		private DateTime depthLastFrame = DateTime.Now;
-		private DateTime rgbLastFrame = DateTime.Now;
+		private DateTime videoLastFrame = DateTime.Now;
 		private int depthFPS = 0;
-		private int rgbFPS = 0;
+		private int videoFPS = 0;
+		
+		// Stuff for GL
+		uint depthTexture;
+		uint rgbTexture;
+		
+		byte[] rgbBufferBack;
+		byte[] rgbBufferMid;
+		byte[] rgbBufferFront;
+		GCHandle rgbHandleBack;
+		GCHandle rgbHandleMid;
+		GCHandle rgbHandleFront;
+		
+		byte[] depthBufferBack;
+		byte[] depthBufferMid;
+		byte[] depthBufferFront;
+		GCHandle depthHandleBack;
+		GCHandle depthHandleMid;
+		GCHandle depthHandleFront;
 		
 		/// <summary>
 		/// Constructor
@@ -74,6 +90,21 @@ namespace KinectDemo
 				v = Math.Pow((double)v, 3.0) * 6.0;
 				gamma[i] = (UInt16)(v * 6.0 * 256.0);
 			}
+			
+			// Allocate swap bufers
+			this.rgbBufferFront = new byte[VideoCamera.DataFormatSizes[VideoCamera.DataFormatOption.RGB]];
+			this.rgbBufferMid 	= new byte[VideoCamera.DataFormatSizes[VideoCamera.DataFormatOption.RGB]];
+			this.rgbBufferBack 	= new byte[VideoCamera.DataFormatSizes[VideoCamera.DataFormatOption.RGB]];
+			this.rgbHandleFront = GCHandle.Alloc(this.rgbBufferFront, GCHandleType.Pinned);
+			this.rgbHandleMid 	= GCHandle.Alloc(this.rgbBufferMid, GCHandleType.Pinned);
+			this.rgbHandleBack 	= GCHandle.Alloc(this.rgbBufferBack, GCHandleType.Pinned);
+			
+			this.depthBufferFront 	= new byte[640 * 480 * 3];
+			this.depthBufferMid 	= new byte[640 * 480 * 3];
+			this.depthBufferBack 	= new byte[640 * 480 * 3];
+			this.depthHandleFront 	= GCHandle.Alloc(this.depthBufferFront, GCHandleType.Pinned);
+			this.depthHandleMid 	= GCHandle.Alloc(this.depthBufferMid, GCHandleType.Pinned);
+			this.depthHandleBack 	= GCHandle.Alloc(this.depthBufferBack, GCHandleType.Pinned);
 			
 			// Check for kinect devices
 			if(Kinect.DeviceCount == 0)
@@ -103,6 +134,14 @@ namespace KinectDemo
 			this.kinect = new Kinect(this.kinectDeviceSelectCombo.SelectedIndex);
 			this.kinect.Open();
 			
+			// Set the buffer to back first
+			this.kinect.VideoCamera.DataBuffer = rgbHandleBack.AddrOfPinnedObject();
+			this.kinect.DepthCamera.DataBuffer = depthHandleBack.AddrOfPinnedObject();
+			
+			// Set modes
+			this.kinect.VideoCamera.DataFormat = VideoCamera.DataFormatOption.RGB;
+			this.kinect.DepthCamera.DataFormat = DepthCamera.DataFormatOption.Format11Bit;
+			
 			// Enable controls and info
 			this.bottomPanel.Enabled = true;
 			
@@ -112,37 +151,12 @@ namespace KinectDemo
 			// Set Motor to 0
 			this.motorControlTrack.Value = 0;
 			
-			// Start RGB camera
-			this.kinect.RGBCamera.DataReceived += delegate(object sender, RGBCamera.DataReceivedEventArgs e) {
-				if((DateTime.Now - this.rgbLastFrame).TotalMilliseconds >= 1000)
-				{
-					this.rgbFPS = this.rgbFrameCount;
-					this.rgbFrameCount = 0;
-					this.rgbLastFrame = DateTime.Now;
-				}
-				else
-				{
-					this.rgbFrameCount++;
-				}
-				
-			};
-			this.kinect.RGBCamera.Start();
+			// Start video camera
+			this.kinect.VideoCamera.DataReceived += new VideoCamera.DataReceivedEventHandler(this.HandleVideoDataReceived);
+			this.kinect.VideoCamera.Start();
 			
 			// Start depth camera
-			this.kinect.DepthCamera.DataReceived += delegate(object sender, DepthCamera.DataReceivedEventArgs e) {
-				
-				if((DateTime.Now - this.depthLastFrame).TotalMilliseconds >= 1000)
-				{
-					this.depthFPS = this.depthFrameCount;
-					this.depthFrameCount = 0;
-					this.depthLastFrame = DateTime.Now;
-				}
-				else
-				{
-					this.depthFrameCount++;
-				}
-						
-			};
+			this.kinect.DepthCamera.DataReceived += new DepthCamera.DataReceivedEventHandler(this.HandleDepthDataReceived);
 			this.kinect.DepthCamera.Start();
 			
 			// Enable disconnect
@@ -167,6 +181,14 @@ namespace KinectDemo
 					
 					// Let the kinect library handle any pending stuff on the usb streams.
 					Kinect.ProcessEvents();
+					
+					try
+					{
+						this.imagePanel.Invalidate();
+					}
+					catch(Exception e)
+					{
+					}
 				}
 			});
 			this.updateStatusThread.Start();
@@ -205,6 +227,109 @@ namespace KinectDemo
 		private void HandleLogMessage(object sender, LogEventArgs e)
 		{
 			
+		}
+		
+		private void HandleVideoDataReceived(object sender, VideoCamera.DataReceivedEventArgs e)
+		{
+			if(this.kinect == null || this.kinect.IsOpen == false)
+			{
+				return;
+			}
+			if((DateTime.Now - this.videoLastFrame).TotalMilliseconds >= 1000)
+			{
+				this.videoFPS = this.videoFrameCount;
+				this.videoFrameCount = 0;
+				this.videoLastFrame = DateTime.Now;
+			}
+			else
+			{
+				this.videoFrameCount++;
+			}
+			
+			// Swap mid and back
+			GCHandle tmp = rgbHandleBack;
+			rgbHandleMid = rgbHandleBack;
+			rgbHandleBack = tmp;
+			
+			// Set kinect video camera's buffer to new back buffer
+			this.kinect.VideoCamera.DataBuffer = rgbHandleBack.AddrOfPinnedObject();
+		}
+		
+		private void HandleDepthDataReceived(object sender, DepthCamera.DataReceivedEventArgs e)
+		{
+			if(this.kinect == null || this.kinect.IsOpen == false)
+			{
+				return;
+			}
+			if((DateTime.Now - this.depthLastFrame).TotalMilliseconds >= 1000)
+			{
+				this.depthFPS = this.depthFrameCount;
+				this.depthFrameCount = 0;
+				this.depthLastFrame = DateTime.Now;
+			}
+			else
+			{
+				this.depthFrameCount++;
+			}
+			
+			try
+			{
+				// Swap mid and back
+				unsafe
+				{
+					byte *ptrMid 	= (byte *)this.depthHandleMid.AddrOfPinnedObject();
+					Int16 *ptrBack 	= (Int16 *)this.depthHandleBack.AddrOfPinnedObject();
+					int dim 		= 640 * 480;
+					int i 			= 0;
+					for (i = 0; i < dim; i++)
+					{
+						Int16 pval 	= (Int16)this.gamma[ptrBack[i]];
+						Int16 lb 	= (Int16)(pval & 0xff);
+						switch (pval>>8)
+						{
+							case 0:
+								*ptrMid++ = 255;
+								*ptrMid++ = (byte)(255 - lb);
+								*ptrMid++ = (byte)(255 - lb);
+								break;
+							case 1:
+								*ptrMid++ = 255;
+								*ptrMid++ = (byte)lb;
+								*ptrMid++ = 0;
+								break;
+							case 2:
+								*ptrMid++ = (byte)(255 - lb);
+								*ptrMid++ = 255;
+								*ptrMid++ = 0;
+								break;
+							case 3:
+								*ptrMid++ = 0;
+								*ptrMid++ = 255;
+								*ptrMid++ = (byte)lb;
+								break;
+							case 4:
+								*ptrMid++ = 0;
+								*ptrMid++ = (byte)(255 - lb);
+								*ptrMid++ = 255;
+								break;
+							case 5:
+								*ptrMid++ = 0;
+								*ptrMid++ = 0;
+								*ptrMid++ = (byte)(255 - lb);
+								break;
+							default:
+								*ptrMid++ = 0;
+								*ptrMid++ = 0;
+								*ptrMid++ = 0;
+								break;
+						}
+					}
+				}
+			}
+			catch(Exception ex)
+			{
+				Console.WriteLine(ex.ToString());
+			}
 		}
 		
 		/// <summary>
@@ -247,7 +372,7 @@ namespace KinectDemo
 				return;
 			}
 			
-			this.Text = "FPS(RGB):" + this.rgbFPS + "   FPS(DEPTH):" + this.depthFPS;
+			this.Text = "FPS(RGB):" + this.videoFPS + "   FPS(DEPTH):" + this.depthFPS;
 			
 			this.kinect.UpdateStatus();
 			this.motorTiltStatusLabel.Text = "Tilt Status: " + this.kinect.Motor.TiltStatus;
@@ -266,8 +391,28 @@ namespace KinectDemo
 			GL.ClearDepth(1.0);
 			GL.DepthFunc(DepthFunction.Less);
 			GL.Disable(EnableCap.DepthTest);
+			GL.Enable(EnableCap.Blend);
+			GL.BlendFunc(BlendingFactorSrc.SrcAlpha, BlendingFactorDest.OneMinusSrcAlpha);
+			GL.ShadeModel(ShadingModel.Smooth);
 			
-			
+			GL.GenTextures(1, out this.rgbTexture);
+			GL.BindTexture(TextureTarget.Texture2D, this.rgbTexture);
+			GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
+			GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear);
+			GL.GenTextures(1, out this.depthTexture);
+			GL.BindTexture(TextureTarget.Texture2D, this.depthTexture);
+			GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
+			GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear);
+			this.ResizeScene();
+		}
+		
+		private void ResizeScene()
+		{
+			GL.Viewport(0, 0, 1280, 480);
+			GL.MatrixMode(MatrixMode.Projection);
+			GL.LoadIdentity();
+			GL.Ortho(0, 1280, 480, 0, -1.0f, 1.0f);
+			GL.MatrixMode(MatrixMode.Modelview);
 		}
 		
 		/// <summary>
@@ -275,7 +420,47 @@ namespace KinectDemo
 		/// </summary>
 		private void ImagePanel_Paint()
 		{
+			GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
+			GL.LoadIdentity();
+
+			if(this.kinect != null && this.kinect.IsOpen)
+			{
+				GL.Enable(EnableCap.Texture2D);
+				
+				// Swap mid and front RGB
+				GCHandle tmp = rgbHandleMid;
+				rgbHandleFront = rgbHandleMid;
+				rgbHandleMid = tmp;
+				
+				// Swap mid and front depth
+				tmp = depthHandleMid;
+				depthHandleFront = depthHandleMid;
+				depthHandleMid = tmp;
+				
+				// Draw RGB texture
+				GL.BindTexture(TextureTarget.Texture2D, this.rgbTexture);
+				GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Three, 640, 480, 0, OpenTK.Graphics.OpenGL.PixelFormat.Rgb, PixelType.UnsignedByte, (byte[])rgbHandleFront.Target);
+				GL.Begin(BeginMode.TriangleFan);
+				GL.Color4(255.0f, 255.0f, 255.0f, 255.0f);
+				GL.TexCoord2(0, 0); GL.Vertex3(0,0,0);
+				GL.TexCoord2(1, 0); GL.Vertex3(640,0,0);
+				GL.TexCoord2(1, 1); GL.Vertex3(640,480,0);
+				GL.TexCoord2(0, 1); GL.Vertex3(0,480,0);
+				GL.End();
+				
+				// Draw Depth texture
+				GL.BindTexture(TextureTarget.Texture2D, this.depthTexture);
+				GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Three, 640, 480, 0, OpenTK.Graphics.OpenGL.PixelFormat.Rgb, PixelType.UnsignedByte, (byte[])depthHandleFront.Target);
+				GL.Begin(BeginMode.TriangleFan);
+				GL.Color4(255.0f, 255.0f, 255.0f, 255.0f);
+				GL.TexCoord2(0, 0); GL.Vertex3(640,0,0);
+				GL.TexCoord2(1, 0); GL.Vertex3(1280,0,0);
+				GL.TexCoord2(1, 1); GL.Vertex3(1280,480,0);
+				GL.TexCoord2(0, 1); GL.Vertex3(640,480,0);
+				GL.End();
+			}
 			
+			this.imagePanel.SwapBuffers();
 		}
 		
 		/// <summary>
@@ -347,13 +532,13 @@ namespace KinectDemo
 			this.rgbPanel.Click += delegate(object sender, EventArgs e) {
 				if(this.kinect != null)
 				{
-					if(this.kinect.RGBCamera.IsRunning)
+					if(this.kinect.VideoCamera.IsRunning)
 					{
-						this.kinect.RGBCamera.Stop();	
+						this.kinect.VideoCamera.Stop();	
 					}
 					else
 					{
-						this.kinect.RGBCamera.Start();	
+						this.kinect.VideoCamera.Start();	
 					}
 				}
 			};
@@ -565,7 +750,7 @@ namespace KinectDemo
 			this.mainLayoutPanel = new TableLayoutPanel();
 			this.mainLayoutPanel.ColumnCount = 1;
 			this.mainLayoutPanel.RowCount = 3;
-			this.mainLayoutPanel.Controls.Add(this.topPanel, 0, 0);
+			this.mainLayoutPanel.Controls.Add(this.imagePanel, 0, 0);
 			this.mainLayoutPanel.Controls.Add(this.bottomPanel, 0, 1);
 			this.mainLayoutPanel.Controls.Add(this.debugTextbox, 0, 2);
 			this.mainLayoutPanel.AutoSize = true;
@@ -579,7 +764,7 @@ namespace KinectDemo
 			// infoUpdateTimer
 			//
 			this.infoUpdateTimer = new System.Windows.Forms.Timer();
-			this.infoUpdateTimer.Interval = 200;
+			this.infoUpdateTimer.Interval = 500;
 			this.infoUpdateTimer.Enabled = false;
 			this.infoUpdateTimer.Tick += delegate(object sender, EventArgs e) {
 				this.UpdateInfoPanel();
@@ -596,6 +781,9 @@ namespace KinectDemo
 			this.Controls.Add(this.mainToolbar);
 			this.Controls.Add(this.mainLayoutPanel);
 			this.FormClosing += delegate(object sender, FormClosingEventArgs e) {
+				this.rgbHandleFront.Free();
+				this.rgbHandleMid.Free();
+				this.rgbHandleBack.Free();
 				Kinect.Shutdown();
 			};
 			

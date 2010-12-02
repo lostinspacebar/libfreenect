@@ -200,6 +200,9 @@ namespace LibFreenect
 			
 			//Register the device
 			KinectNative.RegisterDevice(this.devicePointer, this);
+			
+			// Open now
+			this.IsOpen = true;
 		}
 		
 		/// <summary>
@@ -222,6 +225,9 @@ namespace LibFreenect
 			
 			// Unegister the device
 			KinectNative.UnregisterDevice(this.devicePointer);
+			
+			// Not open anymore
+			this.IsOpen = false;
 		}
 		
 		/// <summary>

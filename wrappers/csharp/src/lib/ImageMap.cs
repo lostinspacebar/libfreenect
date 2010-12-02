@@ -25,7 +25,9 @@
  */
 
 using System;
+using System.Collections.Generic;
 using System.Drawing;
+using System.Runtime.InteropServices;
 
 namespace LibFreenect
 {
@@ -35,28 +37,14 @@ namespace LibFreenect
 	/// <author>Aditya Gaddam (adityagaddam@gmail.com)</author>
 	/// 
 	public class ImageMap
-	{
-		
+	{	
 		/// <summary>
-		/// Returns the Color value at the specified x and y coordinates
+		/// GC handle to the data in the image map
 		/// </summary>
-		/// <param name="x">
-		/// A <see cref="System.Int32"/>
-		/// </param>
-		/// <param name="y">
-		/// A <see cref="System.Int32"/>
-		/// </param>
-		public Color this[int x, int y]
-		{
-			get
-			{
-				uint value = this.Data[y * this.Width + x];
-				return Color.FromArgb((int)(value >> 16), (int)(value >> 8) & 0xFF, (int)value & 0xFF);
-			}
-		}
-		
+		private GCHandle dataHandle;
+	
 		/// <summary>
-		/// Gets the width of the depth map
+		/// Gets the width of the image map
 		/// </summary>
 		public int Width
 		{
@@ -65,7 +53,7 @@ namespace LibFreenect
 		}
 		
 		/// <summary>
-		/// Gets the height of the depth map
+		/// Gets the height of the image map
 		/// </summary>
 		public int Height
 		{
@@ -77,21 +65,77 @@ namespace LibFreenect
 		/// Gets the raw data in the ImageMap. This data is in a 1-dimensional 
 		/// array so it's easy to work with in unsafe code. 
 		/// </summary>
-		public byte[] Data;
+		public byte[] Data
+		{
+			get;
+			private set;
+		}
 		
 		/// <summary>
-		/// Constructor
+		/// Gets the data pointer from the Kinect library
 		/// </summary>
-		/// <param name="width">
-		/// Width of the image map
-		/// </param>
-		/// <param name="height">
-		/// Height of the image map
-		/// </param>
-		public ImageMap(int width, int height)
+		public IntPtr DataPointer
 		{
-			this.Width = width;
-			this.Height = height;
+			get;
+			private set;
+		}
+		
+		/// <summary>
+		/// Gets the format this image is in
+		/// </summary>
+		public VideoCamera.DataFormatOption DataFormat
+		{
+			get;
+			private set;
+		}
+		
+		/// <summary>
+		/// Constructor that allocates a pinned buffer
+		/// </summary>
+		/// <param name="dataFormat">
+		/// A <see cref="VideoCamera.DataFormatOption"/>
+		/// </param>
+		/// <param name="allocateBuffer">
+		/// 
+		/// </param>
+		internal ImageMap(VideoCamera.DataFormatOption dataFormat)
+		{
+			this.Width = VideoCamera.DataFormatDimensions[dataFormat].X;
+			this.Height = VideoCamera.DataFormatDimensions[dataFormat].Y;
+			this.DataFormat = dataFormat;
+			this.Data = new byte[VideoCamera.DataFormatSizes[dataFormat]];
+			this.dataHandle = GCHandle.Alloc(this.Data, GCHandleType.Pinned);
+			this.DataPointer = this.dataHandle.AddrOfPinnedObject();
+		}
+		
+		/// <summary>
+		/// Constructor where a buffer allocation isn't needed
+		/// </summary>
+		/// <param name="dataFormat">
+		/// A <see cref="VideoCamera.DataFormatOption"/>
+		/// </param>
+		/// <param name="bufferPointer">
+		/// A <see cref="IntPtr"/>
+		/// </param>
+		internal ImageMap(VideoCamera.DataFormatOption dataFormat, IntPtr bufferPointer)
+		{
+			this.Width = VideoCamera.DataFormatDimensions[dataFormat].X;
+			this.Height = VideoCamera.DataFormatDimensions[dataFormat].Y;
+			this.DataFormat = dataFormat;
+			this.Data = null;
+			this.dataHandle = default(GCHandle);
+			this.DataPointer = bufferPointer;
+		}
+		
+		/// <summary>
+		/// Destructoooorrr
+		/// </summary>
+		~ImageMap()
+		{
+			if(this.dataHandle != default(GCHandle))
+			{
+				this.dataHandle.Free();
+			}
 		}
 	}
 }

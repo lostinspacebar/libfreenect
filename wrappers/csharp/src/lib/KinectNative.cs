@@ -72,6 +72,12 @@ namespace LibFreenect
 		/// </summary>
 		public static void ShutdownContext()
 		{
+			// Close all devices
+			foreach(Kinect device in KinectNative.deviceMap.Values)
+			{
+				device.Close();
+			}
+			
 			// Shutdown context
 			int result = KinectNative.freenect_shutdown(KinectNative.freenectContext);
 			if(result != 0)
@@ -180,7 +186,7 @@ namespace LibFreenect
 		public static extern int freenect_set_tilt_degs(IntPtr device, double angle);
 		
 		[DllImport("libfreenect")]
-		public static extern int freenect_set_video_format(IntPtr device, VideoCamera.DataFormatOptions rgbFormat);
+		public static extern int freenect_set_video_format(IntPtr device, VideoCamera.DataFormatOption rgbFormat);
 		
 		[DllImport("libfreenect")]
 		public static extern void freenect_set_video_callback(IntPtr device, FreenectVideoDataCallback callback);
@@ -192,7 +198,7 @@ namespace LibFreenect
 		public static extern int freenect_stop_video(IntPtr device);
 		
 		[DllImport("libfreenect")]
-		public static extern int freenect_set_depth_format(IntPtr device, DepthCamera.DataFormatOptions depthFormat);
+		public static extern int freenect_set_depth_format(IntPtr device, DepthCamera.DataFormatOption depthFormat);
 		
 		[DllImport("libfreenect")]
 		public static extern void freenect_set_depth_callback(IntPtr device, FreenectDepthDataCallback callback);
@@ -208,6 +214,12 @@ namespace LibFreenect
 		
 		[DllImport("libfreenect")]
 		public static extern IntPtr freenect_get_tilt_state(IntPtr device);
+		
+		[DllImport("libfreenect")]
+		public static extern int freenect_set_depth_buffer(IntPtr device, IntPtr buf);
+		
+		[DllImport("libfreenect")]
+		public static extern int freenect_set_video_buffer(IntPtr device, IntPtr buf);
 	}
 	
 	/// <summary>
@@ -219,7 +231,7 @@ namespace LibFreenect
 		public Int16 					AccelerometerY;
 		public Int16 					AccelerometerZ;
 		public SByte  					TiltAngle;
-		public Motor.TiltStatusOptions  TiltStatus;
+		public Motor.TiltStatusOption  TiltStatus;
 	}
 	
 	/// <summary>

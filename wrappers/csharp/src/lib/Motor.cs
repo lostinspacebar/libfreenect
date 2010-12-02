@@ -90,7 +90,7 @@ namespace LibFreenect
 		/// <summary>
 		/// Gets the status of the tilt motor.
 		/// </summary>
-		public TiltStatusOptions TiltStatus
+		public TiltStatusOption TiltStatus
 		{
 			get
 			{
@@ -158,7 +158,7 @@ namespace LibFreenect
 		/// <summary>
 		/// Different states the tilt motor can be in operation
 		/// </summary>
-		public enum TiltStatusOptions
+		public enum TiltStatusOption
 		{
 			Stopped 	= 0x00,
 		 	AtLimit 	= 0x01,

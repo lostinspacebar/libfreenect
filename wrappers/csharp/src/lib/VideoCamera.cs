@@ -25,18 +25,19 @@
  */
 
 using System;
+using System.Drawing;
+using System.Drawing.Imaging;
 using System.Runtime.InteropServices;
 using System.Collections.Generic;
-using System.Drawing;
 
 namespace LibFreenect
 {
 	/// <summary>
-	/// Provides access to the depth camera on the Kinect
+	/// Provides access to the RGB/IR camera on the Kinect
 	/// </summary>
 	/// <author>Aditya Gaddam (adityagaddam@gmail.com)</author>
 	/// 
-	public class DepthCamera
+	public class VideoCamera
 	{
 		
 		/// <summary>
@@ -55,9 +56,9 @@ namespace LibFreenect
 		private IntPtr dataBuffer = IntPtr.Zero;
 		
 		/// <summary>
-		/// DepthMap waiting for data
+		/// ImageMap waiting for data
 		/// </summary>
-		private DepthMap nextFrameDepthMap = null;
+		private ImageMap nextFrameImage = null;
 		
 		/// <summary>
 		/// Event raised when video data (an image) has been received.
@@ -65,7 +66,7 @@ namespace LibFreenect
 		public event DataReceivedEventHandler DataReceived = delegate { };
 		
 		/// <summary>
-		/// Gets whether the depth camera is streaming data
+		/// Gets whether the video camera is streaming data
 		/// </summary>
 		public bool IsRunning
 		{
@@ -74,7 +75,7 @@ namespace LibFreenect
 		}
 		
 		/// <summary>
-		/// Gets or sets the data format this camera will send depth data in.
+		/// Gets or sets the data format this camera will send images in.
 		/// </summary>
 		/// <value>
 		/// Gets or sets the 'dataFormat' member
@@ -92,7 +93,7 @@ namespace LibFreenect
 		}
 		
 		/// <summary>
-		/// Gets sizes in bytes for a frame in each of the formats supported by the depth camera.
+		/// Gets sizes in bytes for a frame in each of the formats supported by the video camera.
 		/// </summary>
 		public static DataFormatSizeCollection DataFormatSizes
 		{
@@ -101,7 +102,7 @@ namespace LibFreenect
 		}
 		
 		/// <summary>
-		/// Gets dimensions for a frame for each of the formats supported by the depth camera.
+		/// Gets dimensions for a frame for each of the formats supported by the video camera.
 		/// </summary>
 		public static DataFormatDimensionCollection DataFormatDimensions
 		{
@@ -111,7 +112,7 @@ namespace LibFreenect
 		
 		/// <summary>
 		/// Gets or sets the direct data buffer the USB stream will use for 
-		/// the depth camera. This should be a pinned location in memory. 
+		/// the video camera. This should be a pinned location in memory. 
 		/// If set to IntPtr.Zero, the library will manage the data buffer 
 		/// for you.
 		/// </summary>
@@ -128,12 +129,21 @@ namespace LibFreenect
 		}
 		
 		/// <summary>
+		/// Static constructor
+		/// </summary>
+		static VideoCamera()
+		{
+			VideoCamera.DataFormatSizes = new VideoCamera.DataFormatSizeCollection();
+			VideoCamera.DataFormatDimensions = new VideoCamera.DataFormatDimensionCollection();
+		}
+		
+		/// <summary>
 		/// Constructor
 		/// </summary>
 		/// <param name="parent">
-		/// Parent <see cref="Kinect"/> device that this depth camera is part of
+		/// Parent <see cref="Kinect"/> device that this video camera is part of
 		/// </param>
-		internal DepthCamera(Kinect parent)
+		internal VideoCamera(Kinect parent)
 		{
 			// Save parent device
 			this.parentDevice = parent;
@@ -141,57 +151,48 @@ namespace LibFreenect
 			// Not running by default
 			this.IsRunning = false;
 			
-			// Set format to 11 bit by default
-			this.DataFormat = DataFormatOption.Format11Bit;
+			// Set format to RGB by default
+			this.DataFormat = DataFormatOption.RGB;
 			
 			// Setup callbacks
-			KinectNative.freenect_set_depth_callback(parent.devicePointer, new FreenectDepthDataCallback(DepthCamera.HandleDataReceived));
+			KinectNative.freenect_set_video_callback(parent.devicePointer, new FreenectVideoDataCallback(VideoCamera.HandleDataReceived));
 		}
 		
 		/// <summary>
-		/// Static constructor
-		/// </summary>
-		static DepthCamera()
-		{
-			DepthCamera.DataFormatSizes = new DepthCamera.DataFormatSizeCollection();
-			DepthCamera.DataFormatDimensions = new DepthCamera.DataFormatDimensionCollection();
-		}
-		
-		/// <summary>
-		/// Starts streaming depth data from this camera
+		/// Starts streaming RGB data from this camera
 		/// </summary>
 		public void Start()
 		{
-			// Update depth map before starting
-			this.UpdateNextFrameDepthMap();
+			// Update image map before starting
+			this.UpdateNextFrameImageMap();
 			
 			// Start
-			int result = KinectNative.freenect_start_depth(this.parentDevice.devicePointer);
+			int result = KinectNative.freenect_start_video(this.parentDevice.devicePointer);
 			if(result != 0)
 			{
-				throw new Exception("Could not start depth stream. Error Code: " + result);
+				throw new Exception("Could not start video stream. Error Code: " + result);
 			}
 			this.IsRunning = true;
 		}
 		
 		/// <summary>
-		/// Stops streaming depth data from this camera
+		/// Stops streaming video data from this camera
 		/// </summary>
 		public void Stop()
 		{
-			int result = KinectNative.freenect_stop_depth(this.parentDevice.devicePointer);
+			int result = KinectNative.freenect_stop_video(this.parentDevice.devicePointer);
 			if(result != 0)
 			{
-				throw new Exception("Could not depth RGB stream. Error Code: " + result);
+				throw new Exception("Could not stop video stream. Error Code: " + result);
 			}
 			this.IsRunning = false;
 		}
 		
 		/// <summary>
-		/// Sets the direct access buffer for the DepthCamera.
+		/// Sets the direct access buffer for the VideoCamera.
 		/// </summary>
 		/// <param name="ptr">
-		/// Pointer to the direct access data buffer for the DepthCamera.
+		/// Pointer to the direct access data buffer for the VideoCamera.
 		/// </param>
 		protected void SetDataBuffer(IntPtr ptr)
 		{
@@ -199,63 +200,63 @@ namespace LibFreenect
 			this.dataBuffer = ptr;
 			
 			// Tell the kinect library about it
-			KinectNative.freenect_set_depth_buffer(this.parentDevice.devicePointer, ptr);
+			KinectNative.freenect_set_video_buffer(this.parentDevice.devicePointer, ptr);
 			
-			// update depth map
-			this.UpdateNextFrameDepthMap();
+			// update image map
+			this.UpdateNextFrameImageMap();
 		}
 		
 		/// <summary>
-		/// Sets the DepthCameras's data format. Support function for DepthCamera.DataFormat
+		/// Sets the VideoCamera's data format. Support function for VideoCamera.DataFormat property.
 		/// </summary>
 		/// <param name="format">
-		/// A <see cref="DepthCamera.DataFormatOptions"/>
+		/// Format to change the video camera to
 		/// </param>
-		private void SetDataFormat(DepthCamera.DataFormatOption format)
+		protected void SetDataFormat(VideoCamera.DataFormatOption format)
 		{
-			// change depth map that's waiting cause format has changed
-			this.UpdateNextFrameDepthMap();
+			// change imagemap that's waiting cause format has changed
+			this.UpdateNextFrameImageMap();
 			
-			int result = KinectNative.freenect_set_depth_format(this.parentDevice.devicePointer, format);
+			// change format
+			int result = KinectNative.freenect_set_video_format(this.parentDevice.devicePointer, format);
 			if(result != 0)
 			{
-				throw new Exception("Could not switch to depth format " + format + ". Error Code: " + result);
+				throw new Exception("Could not switch to video format " + format + ". Error Code: " + result);
 			}
 			this.dataFormat = format;
 		}
 		
 		/// <summary>
-		/// Updates the next frame depth map that's waiting for data with any state changes
+		/// Updates the next frame imagemap that's waiting for data with any state changes
 		/// </summary>
-		protected void UpdateNextFrameDepthMap()
+		protected void UpdateNextFrameImageMap()
 		{
 			if(this.DataBuffer == IntPtr.Zero)
 			{
-				// have to set our own buffer as the depth buffer
-				this.nextFrameDepthMap = new DepthMap(this.DataFormat);
-				KinectNative.freenect_set_depth_buffer(this.parentDevice.devicePointer, this.nextFrameDepthMap.DataPointer);
+				// have to set our own buffer as the video buffer
+				this.nextFrameImage = new ImageMap(this.DataFormat);
+				KinectNative.freenect_set_video_buffer(this.parentDevice.devicePointer, this.nextFrameImage.DataPointer);
 			}
 			else	
 			{
 				// already have a buffer from user
-				this.nextFrameDepthMap = new DepthMap(this.DataFormat, this.DataBuffer);
+				this.nextFrameImage = new ImageMap(this.DataFormat, this.DataBuffer);
 			}
 		}
 		
 		/// <summary>
-		/// Static callback for C function. This finds out which device the callback was meant for 
-		/// and calls that specific DepthCamera's depth data handler.
+		/// Handles image data from teh video camera
 		/// </summary>
 		/// <param name="device">
 		/// A <see cref="IntPtr"/>
 		/// </param>
-		/// <param name="depthData">
+		/// <param name="imageData">
 		/// A <see cref="IntPtr"/>
 		/// </param>
 		/// <param name="timestamp">
-		/// A <see cref="Int32"/>
+		/// A <see cref="UInt32"/>
 		/// </param>
-		private static void HandleDataReceived(IntPtr device, IntPtr depthData, UInt32 timestamp)
+		private static void HandleDataReceived(IntPtr device, IntPtr imageData, UInt32 timestamp)
 		{
 			// Figure out which device actually got this frame
 			Kinect realDevice = KinectNative.GetDevice(device);
@@ -264,18 +265,19 @@ namespace LibFreenect
 			DateTime dateTime = new System.DateTime(1970, 1, 1, 0, 0, 0, 0).AddSeconds(timestamp);
 			
 			// Send out event
-			realDevice.DepthCamera.DataReceived(realDevice, new DataReceivedEventArgs(dateTime, realDevice.DepthCamera.nextFrameDepthMap));
+			realDevice.VideoCamera.DataReceived(realDevice, new DataReceivedEventArgs(dateTime, realDevice.VideoCamera.nextFrameImage));
 		}
 		
 		/// <summary>
-		/// Format for Depth data coming in
+		/// Format for VideoCamera data coming in
 		/// </summary>
 		public enum DataFormatOption
 		{
-			Format11Bit = 0,
-			Format10Bit = 1,
-			FormatPacked11Bit = 2,
-			FormatPacked10Bit = 3
+			RGB 			= 0,
+			Bayer 			= 1,
+			IR8Bit 			= 2,
+			IR10Bit 		= 3,
+			IR10BitPacked 	= 4
 		}
 		
 		/// <summary>
@@ -308,10 +310,11 @@ namespace LibFreenect
 			public DataFormatDimensionCollection()
 			{
 				this.dimensions = new Dictionary<DataFormatOption, Point>();
-				this.dimensions.Add(DataFormatOption.Format11Bit, new Point(640, 480));
-				this.dimensions.Add(DataFormatOption.Format10Bit, new Point(640, 480));
-				this.dimensions.Add(DataFormatOption.FormatPacked11Bit, new Point(640, 480));
-				this.dimensions.Add(DataFormatOption.FormatPacked10Bit, new Point(640, 480));
+				this.dimensions.Add(DataFormatOption.RGB, new Point(640, 480));
+				this.dimensions.Add(DataFormatOption.Bayer, new Point(640, 480));
+				this.dimensions.Add(DataFormatOption.IR8Bit, new Point(640, 488));
+				this.dimensions.Add(DataFormatOption.IR10Bit, new Point(640, 488));
+				this.dimensions.Add(DataFormatOption.IR10BitPacked, new Point(640, 488));
 			}
 		}
 		
@@ -345,25 +348,26 @@ namespace LibFreenect
 			public DataFormatSizeCollection()
 			{
 				this.sizes = new Dictionary<DataFormatOption, int>();
-				this.sizes.Add(DataFormatOption.Format11Bit, 614400);
-				this.sizes.Add(DataFormatOption.Format10Bit, 614400);
-				this.sizes.Add(DataFormatOption.FormatPacked11Bit, 422400);
-				this.sizes.Add(DataFormatOption.FormatPacked10Bit, 384000);
+				this.sizes.Add(DataFormatOption.RGB, 921600);
+				this.sizes.Add(DataFormatOption.Bayer, 307200);
+				this.sizes.Add(DataFormatOption.IR8Bit, 312320);
+				this.sizes.Add(DataFormatOption.IR10Bit, 614400);
+				this.sizes.Add(DataFormatOption.IR10BitPacked, 390400);
 			}
 		}
 		
 		/// <summary>
-		/// Delegate for depth camera data events
+		/// Delegate for video camera data events
 		/// </summary>
 		public delegate void DataReceivedEventHandler(object sender, DataReceivedEventArgs e);
 		
 		/// <summary>
-		/// Depth camera data
+		/// Video camera data
 		/// </summary>
 		public class DataReceivedEventArgs
 		{
 			/// <summary>
-			/// Gets the timestamp for when this depth data was received
+			/// Gets the timestamp for this image
 			/// </summary>
 			public DateTime Timestamp
 			{
@@ -372,29 +376,21 @@ namespace LibFreenect
 			}
 			
 			/// <summary>
-			/// Gets the depth data 
+			/// Gets image data
 			/// </summary>
-			public DepthMap DepthMap
+			public ImageMap Image
 			{
 				get;
 				private set;
 			}
 			
-			/// <summary>
-			/// constructor
-			/// </summary>
-			/// <param name="timestamp">
-			/// A <see cref="DateTime"/>
-			/// </param>
-			/// <param name="depthMap">
-			/// A <see cref="DepthMap"/>
-			/// </param>
-			public DataReceivedEventArgs(DateTime timestamp, DepthMap depthMap)
+			public DataReceivedEventArgs(DateTime timestamp, ImageMap b)
 			{
 				this.Timestamp = timestamp;
-				this.DepthMap = depthMap;
+				this.Image = b;
 			}
 		}
+		
 	}
+	
 }
-

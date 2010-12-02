@@ -25,6 +25,7 @@
  */
 
 using System;
+using System.Runtime.InteropServices;
 
 namespace LibFreenect
 {
@@ -34,26 +35,12 @@ namespace LibFreenect
 	/// <author>Aditya Gaddam (adityagaddam@gmail.com)</author>
 	/// 
 	public class DepthMap
-	{
-		
+	{		
 		/// <summary>
-		/// Returns the raw depth value (disparity) at the given x and y
-		/// position.
+		/// GC handle to the data in the depth map
 		/// </summary>
-		/// <param name="x">
-		/// A <see cref="x"/>
-		/// </param>
-		/// <param name="y">
-		/// A <see cref="y"/>
-		/// </param>
-		public UInt16 this[int x, int y]
-		{
-			get
-			{
-				return this.Data[(y * 640) + x];
-			}
-		}
-		
+		private GCHandle dataHandle;
+	
 		/// <summary>
 		/// Gets the width of the depth map
 		/// </summary>
@@ -74,24 +61,79 @@ namespace LibFreenect
 		
 		/// <summary>
 		/// Gets the raw data in the DepthMap. This data is in a 1-dimensional 
-		/// array so it's easy to work with in unsafe code.
+		/// array so it's easy to work with in unsafe code. 
 		/// </summary>
-		public UInt16[] Data;
+		public byte[] Data
+		{
+			get;
+			private set;
+		}
 		
 		/// <summary>
-		/// Constructor
+		/// Gets the data pointer from the Kinect library
 		/// </summary>
-		/// <param name="width">
-		/// Width of the depth map
-		/// </param>
-		/// <param name="height">
-		/// Height of the depth map
-		/// </param>
-		public DepthMap(int width, int height)
+		public IntPtr DataPointer
 		{
-			this.Data = new UInt16[DepthCamera.depthDataSize];
-			this.Width = width;
-			this.Height = height;
+			get;
+			private set;
+		}
+		
+		/// <summary>
+		/// Gets the format this depth map is in
+		/// </summary>
+		public DepthCamera.DataFormatOption DataFormat
+		{
+			get;
+			private set;
+		}
+		
+		/// <summary>
+		/// Constructor that allocates a pinned buffer
+		/// </summary>
+		/// <param name="dataFormat">
+		/// A <see cref="DepthCamera.DataFormatOption"/>
+		/// </param>
+		/// <param name="allocateBuffer">
+		/// 
+		/// </param>
+		internal DepthMap(DepthCamera.DataFormatOption dataFormat)
+		{
+			this.Width = DepthCamera.DataFormatDimensions[dataFormat].X;
+			this.Height = DepthCamera.DataFormatDimensions[dataFormat].Y;
+			this.DataFormat = dataFormat;
+			this.Data = new byte[DepthCamera.DataFormatSizes[dataFormat]];
+			this.dataHandle = GCHandle.Alloc(this.Data, GCHandleType.Pinned);
+			this.DataPointer = this.dataHandle.AddrOfPinnedObject();
+		}
+		
+		/// <summary>
+		/// Constructor where a buffer allocation isn't needed
+		/// </summary>
+		/// <param name="dataFormat">
+		/// A <see cref="DepthCamera.DataFormatOption"/>
+		/// </param>
+		/// <param name="bufferPointer">
+		/// A <see cref="IntPtr"/>
+		/// </param>
+		internal DepthMap(DepthCamera.DataFormatOption dataFormat, IntPtr bufferPointer)
+		{
+			this.Width = DepthCamera.DataFormatDimensions[dataFormat].X;
+			this.Height = DepthCamera.DataFormatDimensions[dataFormat].Y;
+			this.DataFormat = dataFormat;
+			this.Data = null;
+			this.dataHandle = default(GCHandle);
+			this.DataPointer = bufferPointer;
+		}
+		
+		/// <summary>
+		/// Destructoooorrr
+		/// </summary>
+		~DepthMap()
+		{
+			if(this.dataHandle != default(GCHandle))
+			{
+				this.dataHandle.Free();
+			}
 		}
 	}
 }
