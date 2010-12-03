@@ -1,19 +1,22 @@
 ﻿<Properties>
   <MonoDevelop.Ide.Workspace ActiveConfiguration="Release|x86" ctype="Workspace" />
-  <MonoDevelop.Ide.Workbench ActiveDocument="../MainForm.cs" ctype="Workbench">
+  <MonoDevelop.Ide.Workbench ActiveDocument="../../../lib/Kinect.cs" ctype="Workbench">
     <Files>
       <File FileName="../../../lib/VideoCamera.cs" Line="268" Column="128" />
       <File FileName="../../../lib/DepthCamera.cs" Line="278" Column="25" />
-      <File FileName="../MainForm.cs" Line="740" Column="56" />
+      <File FileName="../MainForm.cs" Line="210" Column="4" />
       <File FileName="../../../lib/KinectNative.cs" Line="65" Column="14" />
+      <File FileName="../../../lib/SwapBufferCollection.cs" Line="49" Column="3" />
+      <File FileName="../../../lib/ImageMap.cs" Line="1" Column="1" />
+      <File FileName="../../../lib/Kinect.cs" Line="235" Column="4" />
     </Files>
     <Pads>
       <Pad Id="ProjectPad">
         <State expanded="True">
-          <Node name="Kinect.NET" expanded="True" />
-          <Node name="KinectDemo" expanded="True">
-            <Node name="MainForm.cs" selected="True" />
+          <Node name="Kinect.NET" expanded="True">
+            <Node name="Kinect.cs" selected="True" />
           </Node>
+          <Node name="KinectDemo" expanded="True" />
         </State>
       </Pad>
     </Pads>

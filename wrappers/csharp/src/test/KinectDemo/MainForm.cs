@@ -75,6 +75,7 @@ namespace KinectDemo
 		GCHandle depthHandleBack;
 		GCHandle depthHandleMid;
 		GCHandle depthHandleFront;
+
 		
 		/// <summary>
 		/// Constructor
@@ -198,6 +199,14 @@ namespace KinectDemo
 		{
 			// Stop the update thread
 			this.updateStatusThread.Abort();
+			while(this.updateStatusThread.IsAlive)
+			{
+				// wait...
+				Application.DoEvents();
+				Thread.Sleep(1000);
+				Console.WriteLine("waiting for disconnect...");
+			}
+			
 			this.updateStatusThread = null;
 			
 			// Disable update timer first
@@ -213,6 +222,7 @@ namespace KinectDemo
 			// Enable connect
 			this.connectButton.Enabled = true;
 			this.disconnectButton.Enabled = false;
+
 		}
 		
 		/// <summary>
@@ -229,6 +239,15 @@ namespace KinectDemo
 			
 		}
 		
+		/// <summary>
+		/// 
+		/// </summary>
+		/// <param name="sender">
+		/// A <see cref="System.Object"/>
+		/// </param>
+		/// <param name="e">
+		/// A <see cref="VideoCamera.DataReceivedEventArgs"/>
+		/// </param>
 		private void HandleVideoDataReceived(object sender, VideoCamera.DataReceivedEventArgs e)
 		{
 			if(this.kinect == null || this.kinect.IsOpen == false)
@@ -255,6 +274,15 @@ namespace KinectDemo
 			this.kinect.VideoCamera.DataBuffer = rgbHandleBack.AddrOfPinnedObject();
 		}
 		
+		/// <summary>
+		/// 
+		/// </summary>
+		/// <param name="sender">
+		/// A <see cref="System.Object"/>
+		/// </param>
+		/// <param name="e">
+		/// A <see cref="DepthCamera.DataReceivedEventArgs"/>
+		/// </param>
 		private void HandleDepthDataReceived(object sender, DepthCamera.DataReceivedEventArgs e)
 		{
 			if(this.kinect == null || this.kinect.IsOpen == false)
@@ -439,7 +467,14 @@ namespace KinectDemo
 				
 				// Draw RGB texture
 				GL.BindTexture(TextureTarget.Texture2D, this.rgbTexture);
-				GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Three, 640, 480, 0, OpenTK.Graphics.OpenGL.PixelFormat.Rgb, PixelType.UnsignedByte, (byte[])rgbHandleFront.Target);
+				if(this.kinect.VideoCamera.DataFormat == VideoCamera.DataFormatOption.RGB)
+				{
+					GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Three, 640, 480, 0, OpenTK.Graphics.OpenGL.PixelFormat.Rgb, PixelType.UnsignedByte, (byte[])rgbHandleFront.Target);
+				}
+				else
+				{
+					GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.One, 640, 480, 0, OpenTK.Graphics.OpenGL.PixelFormat.Luminance, PixelType.UnsignedByte, (byte[])rgbHandleFront.Target);
+				}
 				GL.Begin(BeginMode.TriangleFan);
 				GL.Color4(255.0f, 255.0f, 255.0f, 255.0f);
 				GL.TexCoord2(0, 0); GL.Vertex3(0,0,0);
@@ -641,17 +676,52 @@ namespace KinectDemo
 			};
 			
 			//
+			// videoFormatControlLabel
+			//
+			this.videoFormatControlLabel = new Label();
+			this.videoFormatControlLabel.Text = "Video Format:";
+			this.videoFormatControlLabel.AutoSize = true;
+			this.videoFormatControlLabel.Dock = DockStyle.Top;
+			this.videoFormatControlLabel.Font = this.headingFont;
+			this.videoFormatControlLabel.BorderStyle = BorderStyle.None;
+			
+			//
+			// videoFormatControlCombo
+			//
+			this.videoFormatControlCombo = new ComboBox();
+			this.videoFormatControlCombo.DropDownStyle = ComboBoxStyle.DropDownList;
+			this.videoFormatControlCombo.Items.Add("RGB");
+			this.videoFormatControlCombo.Items.Add("IR");
+			this.videoFormatControlCombo.SelectedIndex = 0;
+			this.videoFormatControlCombo.Dock = DockStyle.Top;
+			this.videoFormatControlCombo.Font = this.regularFont;
+			this.videoFormatControlCombo.SelectedIndexChanged += delegate(object sender, EventArgs e) {
+				this.kinect.VideoCamera.Stop();
+				if(this.videoFormatControlCombo.SelectedIndex == 0)
+				{
+					this.kinect.VideoCamera.DataFormat = VideoCamera.DataFormatOption.RGB;
+				}
+				else
+				{
+					this.kinect.VideoCamera.DataFormat = VideoCamera.DataFormatOption.IR8Bit;
+				}
+				this.kinect.VideoCamera.Start();
+			};
+			
+			//
 			// controlsPanel
 			//
 			this.controlsPanel = new Panel();
 			this.controlsPanel.Width = 300;
-			this.controlsPanel.Height = 120;
+			this.controlsPanel.Height = 170;
 			this.controlsPanel.Margin = new Padding(0);
 			this.controlsPanel.Padding = new Padding(7);
 			this.controlsPanel.Controls.Add(this.motorControlTrack);
 			this.controlsPanel.Controls.Add(this.motorControlLabel);
 			this.controlsPanel.Controls.Add(this.ledControlCombo);
 			this.controlsPanel.Controls.Add(this.ledControlLabel);
+			this.controlsPanel.Controls.Add(this.videoFormatControlCombo);
+			this.controlsPanel.Controls.Add(this.videoFormatControlLabel);
 			
 			//
 			// motorTiltAngleLabel
@@ -749,10 +819,9 @@ namespace KinectDemo
 			//
 			this.mainLayoutPanel = new TableLayoutPanel();
 			this.mainLayoutPanel.ColumnCount = 1;
-			this.mainLayoutPanel.RowCount = 3;
+			this.mainLayoutPanel.RowCount = 2;
 			this.mainLayoutPanel.Controls.Add(this.imagePanel, 0, 0);
 			this.mainLayoutPanel.Controls.Add(this.bottomPanel, 0, 1);
-			this.mainLayoutPanel.Controls.Add(this.debugTextbox, 0, 2);
 			this.mainLayoutPanel.AutoSize = true;
 			this.mainLayoutPanel.AutoSizeMode = AutoSizeMode.GrowAndShrink;
 			this.mainLayoutPanel.Margin = new Padding(0);
@@ -807,6 +876,8 @@ namespace KinectDemo
 		private ComboBox ledControlCombo;
 		private Label motorControlLabel;
 		private TrackBar motorControlTrack;
+		private Label videoFormatControlLabel;
+		private ComboBox videoFormatControlCombo;
 		private TableLayoutPanel infoPanel;
 		private Label motorTiltAngleLabel;
 		private Label motorTiltStatusLabel;

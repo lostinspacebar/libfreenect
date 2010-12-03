@@ -216,6 +216,16 @@ namespace LibFreenect
 				throw new Exception("Could not close connection to Kinect Device (ID=" + this.DeviceID + "). Error Code = " + result);
 			}
 			
+			// Stop Cameras
+			if(this.VideoCamera.IsRunning)
+			{
+				this.VideoCamera.Stop();
+			}
+			if(this.DepthCamera.IsRunning)
+			{
+				this.DepthCamera.Stop();
+			}
+			
 			// Dispose of child instances
 			this.LED = null;
 			this.Motor = null;
