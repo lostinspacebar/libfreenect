@@ -98,6 +98,8 @@ static int alloc_buffer_ring_depth(freenect_depth_format fmt, buffer_ring_t *buf
 		case FREENECT_DEPTH_10BIT:
 		case FREENECT_DEPTH_11BIT_PACKED:
 		case FREENECT_DEPTH_10BIT_PACKED:
+		case FREENECT_DEPTH_REGISTERED:
+		case FREENECT_DEPTH_MM:
 			sz = freenect_find_depth_mode(FREENECT_RESOLUTION_MEDIUM, fmt).bytes;
 			break;
 		default:
@@ -208,6 +210,10 @@ static void init_thread(void)
 {
 	thread_running = 1;
 	freenect_init(&ctx, 0);
+	// We claim both the motor and the camera, because we can't know in advance
+	// which devices the caller will want, and the c_sync interface doesn't
+	// support audio, so there's no reason to claim the device needlessly.
+	freenect_select_subdevices(ctx, (freenect_device_flags)(FREENECT_DEVICE_MOTOR | FREENECT_DEVICE_CAMERA));
 	pthread_create(&thread, NULL, init, NULL);
 }
 

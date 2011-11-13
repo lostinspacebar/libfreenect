@@ -24,17 +24,41 @@
  * either License.
  */
 
-#ifndef _WINDOWS_UNISTD_EMULATED_H_
-#define _WINDOWS_UNISTD_EMULATED_H_
+#include "as3_jpeg.h"
 
-#include <stdint.h>
+/*
+ * Compress RGB buffer in memory
+ */
+int RGB_2_JPEG(unsigned char *buffer, unsigned char **compressed, long unsigned int *new_len, int quality) {
+	struct jpeg_compress_struct cinfo = {0};
+	struct jpeg_error_mgr jerr;
+	JSAMPROW row_ptr[1];
+	int row_stride;
 
-// MinGW defines _SSIZE_T_ in sys/types.h when it defines ssize_t to be a long.
-// Redefining it causes an error.
-// MSVC does not define this.
-#ifndef _SSIZE_T_
-#define _SSIZE_T_
-typedef long ssize_t;
-#endif // _SSIZE_T_
+	*compressed = NULL;
+	*new_len = 0;
 
-#endif//_WINDOWS_UNISTD_EMULATED_H_
+	cinfo.err = jpeg_std_error(&jerr);
+	jpeg_create_compress(&cinfo);
+	jpeg_mem_dest(&cinfo, compressed, new_len);
+
+	cinfo.image_width = 640;
+	cinfo.image_height = 480;
+	cinfo.input_components = 3;
+	cinfo.in_color_space = JCS_RGB;
+
+	jpeg_set_defaults(&cinfo);
+	jpeg_set_quality(&cinfo, quality, TRUE);
+	jpeg_start_compress(&cinfo, TRUE);
+	row_stride = 640 * 3;
+
+	while (cinfo.next_scanline < cinfo.image_height) {
+		row_ptr[0] = &buffer[cinfo.next_scanline * row_stride];
+		jpeg_write_scanlines(&cinfo, row_ptr, 1);
+	}
+
+	jpeg_finish_compress(&cinfo);
+	jpeg_destroy_compress(&cinfo);
+
+	return 1;
+}

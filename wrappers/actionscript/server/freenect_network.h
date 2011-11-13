@@ -24,17 +24,43 @@
  * either License.
  */
 
-#ifndef _WINDOWS_UNISTD_EMULATED_H_
-#define _WINDOWS_UNISTD_EMULATED_H_
+#ifndef FREENECT_SERVER_H
+#define FREENECT_SERVER_H
 
-#include <stdint.h>
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-// MinGW defines _SSIZE_T_ in sys/types.h when it defines ssize_t to be a long.
-// Redefining it causes an error.
-// MSVC does not define this.
-#ifndef _SSIZE_T_
-#define _SSIZE_T_
-typedef long ssize_t;
-#endif // _SSIZE_T_
+#include <stdio.h>
+#include <stdlib.h>
+#ifndef _WIN32
+	#include <unistd.h>
+	#include <arpa/inet.h>
+#else
+	#include <winsock2.h>
+	#include <ws2tcpip.h>
+	#pragma comment(lib, "Ws2_32.lib")
+	#include <stdint.h>
+	#include <windows.h>
+#endif
+#include <string.h>
+#include <signal.h>
+#include <math.h>
 
-#endif//_WINDOWS_UNISTD_EMULATED_H_
+	typedef void (*callback)(void);
+	int freenect_network_init(callback cb);
+	void freenect_network_close();
+	void freenect_network_read(char *buff, int *len);
+	int freenect_network_sendMessage(int first, int second, unsigned char *data, int len);
+	void freenect_network_wait();
+	#ifdef _WIN32
+	int freenect_network_initSocket(struct addrinfo si_type, PCSTR conf_port, SOCKET *the_socket);
+	#else 
+	int freenect_network_initSocket(struct sockaddr_in si_type, int conf_port, int *the_socket);
+	#endif
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif

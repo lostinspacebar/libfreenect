@@ -1,8 +1,8 @@
 /*
  * This file is part of the OpenKinect Project. http://www.openkinect.org
  *
- * Copyright (c) 2010 individual OpenKinect contributors. See the CONTRIB file
- * for details.
+ * Copyright (c) 2010-2011 individual OpenKinect contributors. See the CONTRIB
+ * file for details.
  *
  * This code is licensed to you under the terms of the Apache License, version
  * 2.0, or, at your option, the terms of the GNU General Public License,
@@ -24,17 +24,17 @@
  * either License.
  */
 
-#ifndef _WINDOWS_UNISTD_EMULATED_H_
-#define _WINDOWS_UNISTD_EMULATED_H_
+#ifndef CAMERAS_H
+#define CAMERAS_H
 
-#include <stdint.h>
+#include "libfreenect.h"
 
-// MinGW defines _SSIZE_T_ in sys/types.h when it defines ssize_t to be a long.
-// Redefining it causes an error.
-// MSVC does not define this.
-#ifndef _SSIZE_T_
-#define _SSIZE_T_
-typedef long ssize_t;
-#endif // _SSIZE_T_
+// Just a couple function declarations.
 
-#endif//_WINDOWS_UNISTD_EMULATED_H_
+// These are called by core.c to do camera-specific initialization that needs
+// camera-specific protocol support.
+int freenect_camera_init(freenect_device *dev);
+int freenect_camera_teardown(freenect_device *dev);
+
+#endif
+

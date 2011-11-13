@@ -1,8 +1,8 @@
 /*
  * This file is part of the OpenKinect Project. http://www.openkinect.org
  *
- * Copyright (c) 2010 individual OpenKinect contributors. See the CONTRIB file
- * for details.
+ * Copyright (c) 2011 individual OpenKinect contributors. See the CONTRIB
+ * file for details.
  *
  * This code is licensed to you under the terms of the Apache License, version
  * 2.0, or, at your option, the terms of the GNU General Public License,
@@ -24,17 +24,14 @@
  * either License.
  */
 
-#ifndef _WINDOWS_UNISTD_EMULATED_H_
-#define _WINDOWS_UNISTD_EMULATED_H_
+#ifndef REGISTRATION_H
+#define REGISTRATION_H
 
-#include <stdint.h>
+#include "libfreenect.h"
 
-// MinGW defines _SSIZE_T_ in sys/types.h when it defines ssize_t to be a long.
-// Redefining it causes an error.
-// MSVC does not define this.
-#ifndef _SSIZE_T_
-#define _SSIZE_T_
-typedef long ssize_t;
-#endif // _SSIZE_T_
+// Internal function declarations relating to registration
+int freenect_init_registration(freenect_device* dev);
+int freenect_apply_registration(freenect_device* dev, uint8_t* input_packed, uint16_t* output_mm);
+int freenect_apply_depth_to_mm(freenect_device* dev, uint8_t* input_packed, uint16_t* output_mm);
 
-#endif//_WINDOWS_UNISTD_EMULATED_H_
+#endif

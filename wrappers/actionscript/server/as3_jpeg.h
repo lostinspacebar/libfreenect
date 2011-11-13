@@ -24,17 +24,21 @@
  * either License.
  */
 
-#ifndef _WINDOWS_UNISTD_EMULATED_H_
-#define _WINDOWS_UNISTD_EMULATED_H_
+#ifndef SERVER_JPEG_H
+#define SERVER_JPEG_H
 
-#include <stdint.h>
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-// MinGW defines _SSIZE_T_ in sys/types.h when it defines ssize_t to be a long.
-// Redefining it causes an error.
-// MSVC does not define this.
-#ifndef _SSIZE_T_
-#define _SSIZE_T_
-typedef long ssize_t;
-#endif // _SSIZE_T_
+#include <stdio.h>
+#include <stdlib.h>
+#include <jpeglib.h>
 
-#endif//_WINDOWS_UNISTD_EMULATED_H_
+int RGB_2_JPEG(unsigned char *buffer, unsigned char **compressed, long unsigned int *new_len, int quality);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif

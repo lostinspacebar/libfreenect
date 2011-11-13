@@ -1,7 +1,7 @@
 /*
  * This file is part of the OpenKinect Project. http://www.openkinect.org
  *
- * Copyright (c) 2010 individual OpenKinect contributors. See the CONTRIB file
+ * Copyright (c) 2011 individual OpenKinect contributors. See the CONTRIB file
  * for details.
  *
  * This code is licensed to you under the terms of the Apache License, version
@@ -24,17 +24,37 @@
  * either License.
  */
 
-#ifndef _WINDOWS_UNISTD_EMULATED_H_
-#define _WINDOWS_UNISTD_EMULATED_H_
+#ifndef __LOADER_H__
+#define __LOADER_H__
 
 #include <stdint.h>
+#include "usb_libusb10.h"
 
-// MinGW defines _SSIZE_T_ in sys/types.h when it defines ssize_t to be a long.
-// Redefining it causes an error.
-// MSVC does not define this.
-#ifndef _SSIZE_T_
-#define _SSIZE_T_
-typedef long ssize_t;
-#endif // _SSIZE_T_
+typedef struct {
+	uint32_t magic;
+	uint32_t tag;
+	uint32_t bytes;
+	uint32_t cmd;
+	uint32_t addr;
+	uint32_t unk;
+} bootloader_command;
 
-#endif//_WINDOWS_UNISTD_EMULATED_H_
+typedef struct {
+	uint32_t magic;
+	uint32_t tag;
+	uint32_t arg1; // initial command: 0.  Firmware blocks: byte count.
+	uint32_t cmd;
+	uint32_t arg2; // initial command: byte count.  Firmware blocks: target address.
+	uint32_t zeros[8];
+} cemdloader_command;
+
+typedef struct {
+	uint32_t magic;
+	uint32_t tag;
+	uint32_t status;
+} bootloader_status_code;
+
+int upload_firmware(fnusb_dev* dev);
+int upload_cemd_data(fnusb_dev* dev);
+
+#endif //__LOADER_H__
