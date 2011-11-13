@@ -172,8 +172,18 @@ namespace freenect
 	/// </summary>
 	public enum SubDevice : int
 	{
-		Motor 		= 0x01,
-		Camera 		= 0x02,
-		Audio 		= 0x04
+		/// <summary>
+		/// The motor sub-device. This also includes the LED and Accelerometer
+		/// sub-devices.
+		/// </summary>
+		Motor 	= 0x01,
+		/// <summary>
+		/// Video and depth cameras
+		/// </summary>
+		Camera 	= 0x02,
+		/// <summary>
+		/// The audio sub-device.
+		/// </summary>
+		Audio 	= 0x04
 	}
 }

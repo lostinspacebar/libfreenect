@@ -183,27 +183,43 @@ namespace KinectDemo
 			{
 				subdevices |= SubDevice.Camera;
 			}
-			//this.kinect.EnabledSubDevices = subdevices;
+			this.kinect.EnabledSubDevices = subdevices;
 			
 			// Open kinect
 			this.kinect.Open();
 			
-			// Set tilt to 0 to start with
-			this.motorTiltUpDown.Value = 0;
+			// Setup image handlers if cameras are enabled
+			if(this.kinect.EnabledSubDevices.HasFlag(SubDevice.Camera))
+			{
+				this.kinect.VideoCamera.DataReceived += HandleKinectVideoCameraDataReceived;
+				this.kinect.DepthCamera.DataReceived += HandleKinectDepthCameraDataReceived;
+				
+				// Update video/depth modes
+				this.UpdateModeList();
+				
+				// Enable video/depth mode chooser
+				this.selectVideoModeGroup.Enabled = true;
+			}
+			else
+			{
+				this.selectVideoModeGroup.Enabled = false;
+			}
 			
-			// Setup image handlers
-			this.kinect.VideoCamera.DataReceived += HandleKinectVideoCameraDataReceived;
-			this.kinect.DepthCamera.DataReceived += HandleKinectDepthCameraDataReceived;
-			
-			// LED is set to none to start
-			this.kinect.LED.Color = LEDColor.None;
-			this.selectLEDColorCombo.SelectedIndex = 0;
-			
-			// Update video/depth modes
-			this.UpdateModeList();
-			
-			// Enable video/depth mode chooser
-			this.selectVideoModeGroup.Enabled = true;
+			// Init LED, Motor control UI only if motor device is enabled
+			if(this.kinect.EnabledSubDevices.HasFlag(SubDevice.Motor))
+			{
+				this.motorTiltUpDown.Enabled = true;
+				this.motorTiltUpDown.Value = 0;
+				
+				this.kinect.LED.Color = LEDColor.None;
+				this.selectLEDColorCombo.Enabled = true;
+				this.selectLEDColorCombo.SelectedIndex = 0;
+			}
+			else
+			{
+				this.motorTiltUpDown.Enabled = false;
+				this.selectLEDColorCombo.Enabled = false;
+			}
 			
 			// Setup update thread
 			this.updateThread = new Thread(delegate()
@@ -217,7 +233,8 @@ namespace KinectDemo
 						
 						// Let preview control render another frame
 						this.previewControl.Render();
-
+						
+						// Process events on USB
 						Kinect.ProcessEvents();
 					}
 					catch(ThreadInterruptedException e)
@@ -226,7 +243,6 @@ namespace KinectDemo
 					}
 					catch(Exception ex)
 					{
-						
 					}
 				}
 			});
@@ -329,11 +345,14 @@ namespace KinectDemo
 		/// </param>
 		private void HandleStatusUpdateTimerTick (object sender, EventArgs e)
 		{
-			this.motorCurrentTiltLabel.Text = "Current Tilt: " + this.kinect.Motor.Tilt;
-			this.motorTiltStatusLabel.Text = "Tilt Status: " + this.kinect.Motor.TiltStatus.ToString();
-			this.accelerometerXValueLabel.Text = Math.Round(this.kinect.Accelerometer.X, 2).ToString();
-			this.accelerometerYValueLabel.Text = Math.Round(this.kinect.Accelerometer.Y, 2).ToString();
-			this.accelerometerZValueLabel.Text = Math.Round(this.kinect.Accelerometer.Z, 2).ToString();
+			if(this.kinect.EnabledSubDevices.HasFlag(SubDevice.Motor))
+			{
+				this.motorCurrentTiltLabel.Text = "Current Tilt: " + this.kinect.Motor.Tilt;
+				this.motorTiltStatusLabel.Text = "Tilt Status: " + this.kinect.Motor.TiltStatus.ToString();
+				this.accelerometerXValueLabel.Text = Math.Round(this.kinect.Accelerometer.X, 2).ToString();
+				this.accelerometerYValueLabel.Text = Math.Round(this.kinect.Accelerometer.Y, 2).ToString();
+				this.accelerometerZValueLabel.Text = Math.Round(this.kinect.Accelerometer.Z, 2).ToString();
+			}
 			
 			this.Text = "Kinect.NET Demo - Video FPS: " + this.previewControl.VideoFPS + " | Depth FPS: " + this.previewControl.DepthFPS;
 		}
@@ -349,7 +368,10 @@ namespace KinectDemo
 		/// </param>
 		private void HandleSelectLEDColorComboSelectedIndexChanged (object sender, EventArgs e)
 		{
-			this.kinect.LED.Color = (LEDColor)Enum.Parse(typeof(LEDColor), this.selectLEDColorCombo.SelectedItem.ToString());
+			if(this.kinect.EnabledSubDevices.HasFlag(SubDevice.Motor))
+			{
+				this.kinect.LED.Color = (LEDColor)Enum.Parse(typeof(LEDColor), this.selectLEDColorCombo.SelectedItem.ToString());
+			}
 		}
 		
 		/// <summary>

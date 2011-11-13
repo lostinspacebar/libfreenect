@@ -221,23 +221,20 @@ namespace freenect
 				throw new Exception("Could not open connection to Kinect Device (ID=" + this.DeviceID + "). Error Code = " + result);
 			}
 			
-			// Create LED connection
-			this.LED = new LED(this);
-			
-			// Create accel connection
-			this.Accelerometer = new Accelerometer(this);
-			
-			// Create motor connection if it's enabled
+			// Create Accel, Motor and LED connections if MOTOR is enabled
 			this.Motor = null;
+			this.LED = null;
+			this.Accelerometer = null;
 			if(this.enabledSubDevices.HasFlag(SubDevice.Motor))
 			{
+				this.LED = new LED(this);
+				this.Accelerometer = new Accelerometer(this);
 				this.Motor = new Motor(this);
 			}
 			
 			// Create camera connections if CAMERA is enabled
 			this.VideoCamera = null;
 			this.DepthCamera = null;
-			
 			if(this.enabledSubDevices.HasFlag(SubDevice.Camera))
 			{
 				this.VideoCamera = new VideoCamera(this);
@@ -257,13 +254,16 @@ namespace freenect
 		public void Close()
 		{
 			// Stop Cameras
-			if(this.VideoCamera.IsRunning)
+			if(this.EnabledSubDevices.HasFlag(SubDevice.Camera))
 			{
-				this.VideoCamera.Stop();
-			}
-			if(this.DepthCamera.IsRunning)
-			{
-				this.DepthCamera.Stop();
+				if(this.VideoCamera.IsRunning)
+				{
+					this.VideoCamera.Stop();
+				}
+				if(this.DepthCamera.IsRunning)
+				{
+					this.DepthCamera.Stop();
+				}
 			}
 			
 			// Close device
@@ -289,16 +289,21 @@ namespace freenect
 		
 		/// <summary>
 		/// Gets updated device status from the Kinect. This updates any properties in the 
-		/// child devices (Motor, LED, etc.)
+		/// child devices (Motor, LED, etc.). This method only does stuff if SubDevice.Motor
+		/// is specified for Kinect.EnabledSubDevices.
 		/// </summary>
 		public void UpdateStatus()
 		{
-			// Ask for new device status
-			KinectNative.freenect_update_tilt_state(this.devicePointer);
-			
-			// Get updated device status
-			IntPtr ptr = KinectNative.freenect_get_tilt_state(this.devicePointer);
-			this.cachedDeviceState = (FreenectTiltState)Marshal.PtrToStructure(ptr, typeof(FreenectTiltState));
+			// Only try to update status if the motor device is actually enabled/open
+			if(this.EnabledSubDevices.HasFlag(SubDevice.Motor))
+			{
+				// Ask for new device status
+				KinectNative.freenect_update_tilt_state(this.devicePointer);
+				
+				// Get updated device status
+				IntPtr ptr = KinectNative.freenect_get_tilt_state(this.devicePointer);
+				this.cachedDeviceState = (FreenectTiltState)Marshal.PtrToStructure(ptr, typeof(FreenectTiltState));
+			}
 		}
 		
 		/// <summary>
