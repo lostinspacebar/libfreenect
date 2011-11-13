@@ -160,7 +160,7 @@ namespace freenect
 			KinectNative.freenect_set_log_callback(KinectNative.freenectContext, LogCallback);
 		}
 
-		[DllImport("freenect", CallingConvention=CallingConvention.Cdecl)]
+		[DllImport("freenect")]
 		public static extern int freenect_init(ref IntPtr context, IntPtr freenectUSBContext);
 		
 		[DllImport("freenect", CallingConvention=CallingConvention.Cdecl)]

@@ -205,7 +205,7 @@ namespace freenect
 			}
 			
 			// Set video buffer
-			KinectNative.freenect_set_video_buffer(this.parentDevice.devicePointer, this.nextFrameData.DataPointer);
+			KinectNative.freenect_set_video_buffer(this.parentDevice.devicePointer, this.nextFrameData.MemoryPointer);
 		}
 		
 		/// <summary>

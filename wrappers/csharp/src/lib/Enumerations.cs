@@ -37,12 +37,34 @@ namespace freenect
 	/// </summary>
 	public enum VideoFormat : int
 	{
+		/// <summary>
+		/// Decompressed RGB image. 3 bytes per pixel.
+		/// </summary>
 		RGB 				= 0,
+		/// <summary>
+		/// Raw bayer image data from Kinect.
+		/// </summary>
 		Bayer 				= 1,
+		/// <summary>
+		/// 8-bit infrared data. Each pixel gets 1 byte.
+		/// </summary>
 		Infrared8Bit 		= 2,
+		/// <summary>
+		/// 10-bit infrared data. Each pixel gets 2 bytes.
+		/// </summary>
 		Infrared10Bit 		= 3,
+		/// <summary>
+		/// 10-bit packed infrared data. This data doesn't 
+		/// necessarily fall on any byte boundaries.
+		/// </summary>
 		InfraredPacked10Bit = 4,
+		/// <summary>
+		/// YUV RGB data
+		/// </summary>
 		YUVRGB 				= 5,
+		/// <summary>
+		/// YUV raw data
+		/// </summary>
 		YUVRaw 				= 6
 	}
 	
@@ -51,10 +73,36 @@ namespace freenect
 	/// </summary>
 	public enum DepthFormat : int
 	{
-		Depth11Bit 			= 0,
-		Depth10Bit 			= 1,
-		DepthPacked11Bit 	= 2,
-		DepthPacked10Bit 	= 3
+		/// <summary>
+		/// 11-bit intensity values per pixel. You will receive 16-bit values (2 bytes) per pixel,
+		/// but only 11-bits from these are useful. Data is structured as 
+		/// [5 dont cares|11 data bits][5 dont cares|11 data bits]
+		/// </summary>
+		Depth11Bit 						= 0,
+		/// <summary>
+		/// Same as Depth11Bit, except 10-bit values.
+		/// </summary>
+		Depth10Bit 						= 1,
+		/// <summary>
+		/// Packed 11-bit values per pixel. This means, byte boundaries aren't respected. 
+		/// Data is represented as [11 data bits][11 data bits] etc. This isn't very useful 
+		/// in most cases.
+		/// </summary>
+		DepthPacked11Bit 				= 2,
+		/// <summary>
+		/// Same as DepthPacked11bit, except 10-bit values
+		/// </summary>
+		DepthPacked10Bit 				= 3,
+		/// <summary>
+		/// Processed depth data in millimeters (mm). Aligned to 640x480 RGB image.
+		/// These will be 16-bit (2-byte) values.
+		/// </summary>
+		DepthProcessedAndRegistered 	= 4,
+		/// <summary>
+		/// Same as DepthProcessedAndRegistered, but the depth data isn't aligned with 
+	 	/// the RGB image. These will be 16-bit (2-byte) values.
+		/// </summary>
+		DepthProcessed					= 5
 	}
 	
 	/// <summary>
@@ -66,8 +114,17 @@ namespace freenect
 	/// </summary>
 	public enum Resolution : int
 	{
+		/// <summary>
+		/// QVGA (320x240)
+		/// </summary>
 		Low 	= 0,
+		/// <summary>
+		/// VGA (640x480)
+		/// </summary>
 		Medium 	= 1,
+		/// <summary>
+		/// SXGA (1280x1024)
+		/// </summary>
 		High 	= 2
 	}
 	

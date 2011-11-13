@@ -265,6 +265,7 @@ namespace KinectDemo
 		/// </summary>
 		public void HandleDepthBackBufferUpdate()
 		{
+			/*
 			// Swap mid and back
 			unsafe
 			{
@@ -318,6 +319,7 @@ namespace KinectDemo
 					}
 				}
 			}
+			*/
 			
 			// Calculate FPS
 			this.depthFrameCount++;

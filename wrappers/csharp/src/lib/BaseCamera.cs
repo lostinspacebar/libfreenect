@@ -162,7 +162,7 @@ namespace freenect
 			}
 			
 			/// <summary>
-			/// Gets... the data
+			/// Gets... the datamap (either Image or Depth)
 			/// </summary>
 			public BaseDataMap Data
 			{
@@ -170,10 +170,10 @@ namespace freenect
 				private set;
 			}
 			
-			public DataReceivedEventArgs(DateTime timestamp, BaseDataMap b)
+			public DataReceivedEventArgs(DateTime timestamp, BaseDataMap data)
 			{
 				this.Timestamp = timestamp;
-				this.Data = b;
+				this.Data = data;
 			}
 		}
 	}

@@ -61,7 +61,7 @@ namespace freenect
 		/// Gets the raw data in the DataMap. This data is in a 1-dimensional 
 		/// array so it's easy to work with in unsafe code. 
 		/// </summary>
-		public byte[] Data
+		public byte[] Buffer
 		{
 			get;
 			private set;
@@ -70,7 +70,7 @@ namespace freenect
 		/// <summary>
 		/// Gets the data pointer from the Kinect library
 		/// </summary>
-		public IntPtr DataPointer
+		public IntPtr MemoryPointer
 		{
 			get;
 			private set;
@@ -97,9 +97,9 @@ namespace freenect
 			this.Width = mode.Width;
 			this.Height = mode.Height;
 			this.CaptureMode = mode;
-			this.Data = new byte[mode.Size];
-			this.dataHandle = GCHandle.Alloc(this.Data, GCHandleType.Pinned);
-			this.DataPointer = this.dataHandle.AddrOfPinnedObject();
+			this.Buffer = new byte[mode.Size];
+			this.dataHandle = GCHandle.Alloc(this.Buffer, GCHandleType.Pinned);
+			this.MemoryPointer = this.dataHandle.AddrOfPinnedObject();
 		}
 		
 		/// <summary>
@@ -113,9 +113,9 @@ namespace freenect
 			this.Width = mode.Width;
 			this.Height = mode.Height;
 			this.CaptureMode = mode;
-			this.Data = null;
+			this.Buffer = null;
 			this.dataHandle = default(GCHandle);
-			this.DataPointer = bufferPointer;
+			this.MemoryPointer = bufferPointer;
 		}
 		
 		/// <summary>

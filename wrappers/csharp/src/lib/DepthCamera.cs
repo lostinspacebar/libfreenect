@@ -224,7 +224,7 @@ namespace freenect
 			}
 			
 			// Set new buffer at library level;
-			KinectNative.freenect_set_depth_buffer(this.parentDevice.devicePointer, this.nextFrameData.DataPointer);
+			KinectNative.freenect_set_depth_buffer(this.parentDevice.devicePointer, this.nextFrameData.MemoryPointer);
 		}
 	}
 }

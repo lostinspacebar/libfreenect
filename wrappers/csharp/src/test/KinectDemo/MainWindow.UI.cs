@@ -133,7 +133,7 @@ namespace KinectDemo
 			this.ledControlGroup = new GroupBox();
 			this.ledControlGroup.Dock = DockStyle.Left;
 			this.ledControlGroup.Text = "LED";
-			this.ledControlGroup.Height = 60;
+			this.ledControlGroup.Width = 200;
 			this.ledControlGroup.Padding = new Padding(10);
 			this.ledControlGroup.Controls.Add(this.selectLEDColorCombo);
 			
@@ -176,7 +176,7 @@ namespace KinectDemo
 			this.motorControlGroup = new GroupBox();
 			this.motorControlGroup.Dock = DockStyle.Left;
 			this.motorControlGroup.Text = "Motor";
-			this.motorControlGroup.Height = 105;
+			this.motorControlGroup.Width = 250;
 			this.motorControlGroup.Padding = new Padding(10);
 			this.motorControlGroup.Controls.Add(this.motorTiltStatusLabel);
 			this.motorControlGroup.Controls.Add(this.motorCurrentTiltLabel);
@@ -212,14 +212,14 @@ namespace KinectDemo
 			this.selectVideoModeCombo = new ComboBox();
 			this.selectVideoModeCombo.Dock = DockStyle.Top;
 			this.selectVideoModeCombo.DropDownStyle = ComboBoxStyle.DropDownList;
-			this.selectVideoModeCombo.SelectedIndexChanged += HandleSelectVideoModeComboSelectedIndexChanged;;
+			this.selectVideoModeCombo.SelectedIndexChanged += HandleSelectVideoModeComboSelectedIndexChanged;
 			
 			///
 			/// selectVideoModeGroup
 			///
 			this.selectVideoModeGroup = new GroupBox();
 			this.selectVideoModeGroup.Dock = DockStyle.Left;
-			this.selectVideoModeGroup.Height = 130;
+			this.selectVideoModeGroup.Width = 350;
 			this.selectVideoModeGroup.Text = "Select Modes";
 			this.selectVideoModeGroup.Padding = new Padding(10);
 			this.selectVideoModeGroup.Controls.Add(this.selectDepthModeCombo);

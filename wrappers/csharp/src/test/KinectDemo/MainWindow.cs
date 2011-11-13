@@ -134,7 +134,7 @@ namespace KinectDemo
 			this.selectDepthModeCombo.Items.Add("Disabled");
 			foreach(var mode in this.kinect.DepthCamera.Modes)
 			{
-				if(mode.Format == DepthFormat.Depth10Bit || mode.Format == DepthFormat.Depth11Bit)
+				if(mode.Format == DepthFormat.Depth10Bit || mode.Format == DepthFormat.Depth11Bit || mode.Format == DepthFormat.DepthProcessedAndRegistered)
 				{
 					this.selectDepthModeCombo.Items.Add(mode);
 				}
