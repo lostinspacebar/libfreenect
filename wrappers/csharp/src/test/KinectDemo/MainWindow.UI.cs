@@ -257,18 +257,16 @@ namespace KinectDemo
 			///
 			/// aboutButton
 			///
-			this.aboutButton = new ToolStripButton();
+			this.aboutButton = new Button();
 			this.aboutButton.Text = "About";
-			this.aboutButton.Padding = new Padding(7, 0, 7, 0);
 			this.aboutButton.Margin = new Padding(10, 7, 0, 7);
 			this.aboutButton.Click += HandleAboutButtonClick;
 			
 			///
 			/// disconnectButton
 			/// 
-			this.disconnectButton = new ToolStripButton();
+			this.disconnectButton = new Button();
 			this.disconnectButton.Text = "Disconnect";
-			this.disconnectButton.Padding = new Padding(7, 0, 7, 0);
 			this.disconnectButton.Margin = new Padding(10, 7, 0, 7);
 			this.disconnectButton.Visible = false;
 			this.disconnectButton.Click += HandleDisconnectButtonClick;
@@ -276,42 +274,69 @@ namespace KinectDemo
 			///
 			/// refreshButton
 			/// 
-			this.refreshButton = new ToolStripButton();
+			this.refreshButton = new Button();
 			this.refreshButton.Text = "Refresh";
-			this.refreshButton.Padding = new Padding(7, 0, 7, 0);
 			this.refreshButton.Margin = new Padding(10, 7, 0, 7);
 			this.refreshButton.Click += HandleRefreshButtonClick;
 			
 			///
 			/// connectButton
 			/// 
-			this.connectButton = new ToolStripButton();
+			this.connectButton = new Button();
 			this.connectButton.Text = "Connect";
-			this.connectButton.Padding = new Padding(7, 0, 7, 0);
-			this.connectButton.Margin = new Padding(10, 7, 0, 7);
+			this.connectButton.Margin = new Padding(10, 7, 10, 7);
 			this.connectButton.Click += HandleConnectButtonClick;
+			
+			///
+			/// enableMotorCheckbox
+			///
+			this.enableMotorCheckbox = new CheckBox();
+			this.enableMotorCheckbox.Text = "Enable Motor";
+			this.enableMotorCheckbox.Margin = new Padding(3, 7, 0, 0);
+			this.enableMotorCheckbox.Checked = true;
+			
+			///
+			/// enableCameraCheckbox
+			///
+			this.enableCameraCheckbox = new CheckBox();
+			this.enableCameraCheckbox.Text = "Enable Cameras";
+			this.enableCameraCheckbox.AutoSize = true;
+			this.enableCameraCheckbox.Margin = new Padding(3, 7, 0, 0);
+			this.enableCameraCheckbox.Padding = new Padding(0, 3, 0, 0);
+			this.enableCameraCheckbox.Checked = true;
+			
+			///
+			/// enableAudioCheckbox
+			///
+			this.enableAudioCheckbox = new CheckBox();
+			this.enableAudioCheckbox.Text = "Enable Audio";
+			this.enableAudioCheckbox.Margin = new Padding(3, 7, 0, 0);
+			this.enableAudioCheckbox.Checked = true;
 			
 			///
 			/// selectDeviceCombo
 			///
-			this.selectDeviceCombo = new ToolStripComboBox();
+			this.selectDeviceCombo = new ComboBox();
 			this.selectDeviceCombo.Width = 150;
-			this.selectDeviceCombo.Margin = new Padding(7, 0, 0, 0);
+			this.selectDeviceCombo.Margin = new Padding(10, 7, 0, 7);
 			this.selectDeviceCombo.DropDownStyle = ComboBoxStyle.DropDownList;
 			
 			///
 			/// mainToolbar
 			///
-			this.mainToolbar = new ToolStrip();
+			this.mainToolbar = new FlowLayoutPanel();
 			this.mainToolbar.Dock = DockStyle.Top;
-			this.mainToolbar.GripStyle = ToolStripGripStyle.Hidden;
+			this.mainToolbar.FlowDirection = FlowDirection.LeftToRight;
 			this.mainToolbar.AutoSize = false;
-			this.mainToolbar.Height = 35;
-			this.mainToolbar.Items.Add(this.selectDeviceCombo);
-			this.mainToolbar.Items.Add(this.refreshButton);
-			this.mainToolbar.Items.Add(this.connectButton);
-			this.mainToolbar.Items.Add(this.disconnectButton);
-			this.mainToolbar.Items.Add(this.aboutButton);
+			this.mainToolbar.Height = 40;
+			this.mainToolbar.Controls.Add(this.selectDeviceCombo);
+			this.mainToolbar.Controls.Add(this.refreshButton);
+			this.mainToolbar.Controls.Add(this.connectButton);
+			this.mainToolbar.Controls.Add(this.disconnectButton);
+			this.mainToolbar.Controls.Add(this.enableMotorCheckbox);
+			this.mainToolbar.Controls.Add(this.enableCameraCheckbox);
+			this.mainToolbar.Controls.Add(this.enableAudioCheckbox);
+			this.mainToolbar.Controls.Add(this.aboutButton);
 			
 			///
 			/// MainWindow
@@ -328,7 +353,7 @@ namespace KinectDemo
 		/// 
 		/// UI Components
 		///
-		private ToolStrip mainToolbar;
+		private FlowLayoutPanel mainToolbar;
 		private Panel controlsPanel;
 		private Panel contentPanel;
 		
@@ -351,11 +376,14 @@ namespace KinectDemo
 		private GroupBox ledControlGroup;
 		private ComboBox selectLEDColorCombo;
 		
-		private ToolStripComboBox selectDeviceCombo;
-		private ToolStripButton refreshButton;
-		private ToolStripButton connectButton;
-		private ToolStripButton disconnectButton;
-		private ToolStripButton aboutButton;
+		private ComboBox selectDeviceCombo;
+		private Button refreshButton;
+		private Button connectButton;
+		private Button disconnectButton;
+		private CheckBox enableMotorCheckbox;
+		private CheckBox enableCameraCheckbox;
+		private CheckBox enableAudioCheckbox;
+		private Button aboutButton;
 		
 		private GroupBox selectVideoModeGroup;
 		private ComboBox selectVideoModeCombo;

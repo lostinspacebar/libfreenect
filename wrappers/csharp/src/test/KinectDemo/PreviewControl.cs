@@ -265,7 +265,63 @@ namespace KinectDemo
 		/// </summary>
 		public void HandleDepthBackBufferUpdate()
 		{
-			/*
+			if(this.DepthMode.Format == DepthFormat.DepthProcessedAndRegistered)
+			{
+				this.HandleProcessedDepthUpdate();
+			}
+			else
+			{
+				this.HandleRawDepthUpdate();
+			}
+			
+			// Calculate FPS
+			this.depthFrameCount++;
+			if((DateTime.Now - this.lastDepthFPSUpate).Seconds >= 1)
+			{
+				this.DepthFPS = this.depthFrameCount;
+				this.depthFrameCount = 0;
+				this.lastDepthFPSUpate = DateTime.Now;
+			}
+			
+			// New data!
+			this.depthDataPending = true;
+		}
+		
+		/// <summary>
+		/// Make the preview control render a frame
+		/// </summary>
+		public void Render()
+		{
+			this.renderPanel.Invalidate();
+		}
+		
+		/// <summary>
+		/// Handle processed depth data
+		/// </summary>
+		private void HandleProcessedDepthUpdate()
+		{
+			// Swap mid and back
+			unsafe
+			{
+				UInt16 *ptrMid 	= (UInt16 *)this.depthDataBuffers.GetHandle(1);
+				UInt16 *ptrBack = (UInt16 *)this.depthDataBuffers.GetHandle(2);
+				int dim 		= this.DepthMode.Width * this.DepthMode.Height;
+				int i 			= 0;
+				UInt16 pval		= 0;
+				UInt16 lb 		= 0;
+				for (i = 0; i < dim; i++)
+				{
+					pval		= ptrBack[i];
+					*ptrMid++ 	= (UInt16)((int)pval * 6);
+				}
+			}
+		}
+		
+		/// <summary>
+		/// Handle raw depth data
+		/// </summary>
+		private void HandleRawDepthUpdate()
+		{
 			// Swap mid and back
 			unsafe
 			{
@@ -319,27 +375,6 @@ namespace KinectDemo
 					}
 				}
 			}
-			*/
-			
-			// Calculate FPS
-			this.depthFrameCount++;
-			if((DateTime.Now - this.lastDepthFPSUpate).Seconds >= 1)
-			{
-				this.DepthFPS = this.depthFrameCount;
-				this.depthFrameCount = 0;
-				this.lastDepthFPSUpate = DateTime.Now;
-			}
-			
-			// New data!
-			this.depthDataPending = true;
-		}
-		
-		/// <summary>
-		/// Make the preview control render a frame
-		/// </summary>
-		public void Render()
-		{
-			this.renderPanel.Invalidate();
 		}
 		
 		/// <summary>
@@ -438,7 +473,14 @@ namespace KinectDemo
 			GL.BindTexture(TextureTarget.Texture2D, this.depthTexture);
 			
 			// Setup texture
-			GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Three, this.DepthMode.Width, this.DepthMode.Height, 0, OpenTK.Graphics.OpenGL.PixelFormat.Rgb, PixelType.UnsignedByte, this.depthDataBuffers.GetHandle(0));
+			if(this.DepthMode.Format == DepthFormat.DepthProcessedAndRegistered)
+			{
+				GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.One, this.DepthMode.Width, this.DepthMode.Height, 0, OpenTK.Graphics.OpenGL.PixelFormat.Luminance, PixelType.UnsignedShort, this.depthDataBuffers.GetHandle(0));
+			}
+			else
+			{
+				GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Three, this.DepthMode.Width, this.DepthMode.Height, 0, OpenTK.Graphics.OpenGL.PixelFormat.Rgb, PixelType.UnsignedByte, this.depthDataBuffers.GetHandle(0));
+			}
 			
 			// Draw texture
 			GL.Begin(BeginMode.TriangleFan);

@@ -68,6 +68,11 @@ namespace KinectDemo
 			this.statusUpdateTimer.Interval = 1000;
 			this.statusUpdateTimer.Tick += this.HandleStatusUpdateTimerTick;
 			
+			Kinect.LogLevel = LoggingLevel.Debug;
+			Kinect.Log += delegate(object sender, LogEventArgs e) {
+				//Console.WriteLine("[" + e.LogLevel.ToString().ToUpper() + "]" + e.Timestamp.ToString() + "\n" + e.Message + "\n");
+			};
+			
 			// Update device list
 			this.UpdateDeviceList();
 			
@@ -164,6 +169,22 @@ namespace KinectDemo
 			// Create instance
 			this.kinect = new Kinect(deviceID);
 			
+			// Set sub-device flags
+			SubDevice subdevices = default(SubDevice);
+			if(this.enableMotorCheckbox.Checked)
+			{
+				subdevices |= SubDevice.Motor;
+			}
+			if(this.enableAudioCheckbox.Checked)
+			{
+				subdevices |= SubDevice.Audio;
+			}
+			if(this.enableCameraCheckbox.Checked)
+			{
+				subdevices |= SubDevice.Camera;
+			}
+			//this.kinect.EnabledSubDevices = subdevices;
+			
 			// Open kinect
 			this.kinect.Open();
 			
@@ -218,6 +239,7 @@ namespace KinectDemo
 			this.connectButton.Visible = false;
 			this.refreshButton.Visible = false;
 			this.selectDeviceCombo.Enabled = false;
+			this.enableMotorCheckbox.Visible = this.enableCameraCheckbox.Visible = this.enableAudioCheckbox.Visible = false;
 			
 			// Enable content areas
 			this.contentPanel.Enabled = true;
@@ -260,6 +282,7 @@ namespace KinectDemo
 			this.connectButton.Visible = true;
 			this.refreshButton.Visible = true;
 			this.selectDeviceCombo.Enabled = true;
+			this.enableMotorCheckbox.Visible = this.enableCameraCheckbox.Visible = this.enableAudioCheckbox.Visible = true;
 			
 			// Disable content areas
 			this.contentPanel.Enabled = false;
@@ -340,7 +363,10 @@ namespace KinectDemo
 		/// </param>
 		private void HandleMotorTiltUpDownValueChanged (object sender, EventArgs e)
 		{
-			this.kinect.Motor.Tilt = (double)this.motorTiltUpDown.Value;
+			if(this.kinect.EnabledSubDevices.HasFlag(SubDevice.Motor))
+			{
+				this.kinect.Motor.Tilt = (double)this.motorTiltUpDown.Value;
+			}
 		}
 		
 		/// <summary>

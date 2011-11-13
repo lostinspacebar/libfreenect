@@ -83,6 +83,7 @@ namespace freenect
 			this.Device = device;
 			this.LogLevel = logLevel;
 			this.Message = message;
+			this.Timestamp = DateTime.Now;
 		}
 		
 	}

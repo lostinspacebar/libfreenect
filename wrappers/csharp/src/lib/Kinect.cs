@@ -122,6 +122,26 @@ namespace freenect
 		}
 		
 		/// <summary>
+		/// Gets or sets the enabled sub devices in the Kinect. This value 
+		/// can only be changed while the Kinect device hasn't been opened. Setting 
+		/// this value on a device that's already open has no effect on it.
+		/// </summary>
+		public SubDevice EnabledSubDevices
+		{
+			get
+			{
+				return this.enabledSubDevices;
+			}
+			set
+			{
+				if(this.IsOpen == false)
+				{
+					this.enabledSubDevices = value;
+				}
+			}
+		}
+		
+		/// <summary>
 		/// Gets or sets the name for this Kinect Device. 
 		/// </summary>
 		/// <remarks>
@@ -135,6 +155,11 @@ namespace freenect
 			get;
 			set;
 		}
+		
+		/// <summary>
+		/// Enabled subdevices
+		/// </summary>
+		private SubDevice enabledSubDevices = SubDevice.Motor | SubDevice.Camera | SubDevice.Audio;
 		
 		/// <summary>
 		/// Current logging level for the kinect session (for all devices)
@@ -186,18 +211,38 @@ namespace freenect
 		/// </summary>
 		public void Open()
 		{
+			// Select sub-devices
+			KinectNative.freenect_select_subdevices(KinectNative.Context, this.enabledSubDevices);
+			
+			// Open device
 			int result = KinectNative.freenect_open_device(KinectNative.Context, ref this.devicePointer, this.DeviceID);
 			if(result != 0)
 			{
 				throw new Exception("Could not open connection to Kinect Device (ID=" + this.DeviceID + "). Error Code = " + result);
 			}
 			
-			// Create child instances
+			// Create LED connection
 			this.LED = new LED(this);
-			this.Motor = new Motor(this);
+			
+			// Create accel connection
 			this.Accelerometer = new Accelerometer(this);
-			this.VideoCamera = new VideoCamera(this);
-			this.DepthCamera = new DepthCamera(this);
+			
+			// Create motor connection if it's enabled
+			this.Motor = null;
+			if(this.enabledSubDevices.HasFlag(SubDevice.Motor))
+			{
+				this.Motor = new Motor(this);
+			}
+			
+			// Create camera connections if CAMERA is enabled
+			this.VideoCamera = null;
+			this.DepthCamera = null;
+			
+			if(this.enabledSubDevices.HasFlag(SubDevice.Camera))
+			{
+				this.VideoCamera = new VideoCamera(this);
+				this.DepthCamera = new DepthCamera(this);
+			}
 			
 			//Register the device
 			KinectNative.RegisterDevice(this.devicePointer, this);

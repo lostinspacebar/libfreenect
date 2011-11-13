@@ -166,4 +166,14 @@ namespace freenect
 		Spew,
 		Flood,
 	}
+	
+	/// <summary>
+	/// Sub-device in the Kinect device.
+	/// </summary>
+	public enum SubDevice : int
+	{
+		Motor 		= 0x01,
+		Camera 		= 0x02,
+		Audio 		= 0x04
+	}
 }
