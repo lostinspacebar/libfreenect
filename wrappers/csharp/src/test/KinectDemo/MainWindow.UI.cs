@@ -320,7 +320,7 @@ namespace KinectDemo
 			/// selectDeviceCombo
 			///
 			this.selectDeviceCombo = new ComboBox();
-			this.selectDeviceCombo.Width = 150;
+			this.selectDeviceCombo.Width = 250;
 			this.selectDeviceCombo.Margin = new Padding(10, 7, 0, 7);
 			this.selectDeviceCombo.DropDownStyle = ComboBoxStyle.DropDownList;
 			

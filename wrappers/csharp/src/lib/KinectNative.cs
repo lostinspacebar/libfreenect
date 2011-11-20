@@ -182,6 +182,12 @@ namespace freenect
 		public static extern int freenect_num_devices(IntPtr context);
 		
 		[DllImport("freenect", CallingConvention=CallingConvention.Cdecl)]
+		public static extern int freenect_list_device_attributes(IntPtr context, out IntPtr attribute_linked_list);
+		
+		[DllImport("freenect", CallingConvention=CallingConvention.Cdecl)]
+		public static extern void freenect_free_device_attributes(IntPtr attribute_linked_list);
+		
+		[DllImport("freenect", CallingConvention=CallingConvention.Cdecl)]
 		public static extern SubDeviceOptions freenect_supported_subdevices();
 		
 		[DllImport("freenect", CallingConvention=CallingConvention.Cdecl)]
@@ -189,6 +195,9 @@ namespace freenect
 		
 		[DllImport("freenect", CallingConvention=CallingConvention.Cdecl)]
 		public static extern int freenect_open_device(IntPtr context, ref IntPtr device, int index);
+		
+		[DllImport("freenect", CallingConvention=CallingConvention.Cdecl)]
+		public static extern int freenect_open_device_by_camera_serial(IntPtr context, ref IntPtr device, string camera_serial);
 		
 		[DllImport("freenect", CallingConvention=CallingConvention.Cdecl)]
 		public static extern int freenect_close_device(IntPtr device);

@@ -26,6 +26,8 @@
 using System;
 using System.Runtime.InteropServices;
 using System.Threading;
+using System.Collections.Generic;
+using System.Text;
 
 namespace freenect
 {
@@ -76,14 +78,40 @@ namespace freenect
 		}
 		
 		/// <summary>
+		/// Gets or sets enabled sub-devices. This property is only 
+		/// used when calling Kinect.Open. 
+		/// </summary>
+		public static SubDeviceOptions EnabledSubDevices
+		{
+			get;
+			set;
+		}
+		
+		/// <summary>
 		/// Raised when a log item is received from the low level Kinect library.
 		/// </summary>
 		public static event LogEventHandler Log = delegate { };
 		
 		/// <summary>
-		/// Gets the device ID for this Kinect device
+		/// Gets the device index for this Kinect device. If multiple Kinect 
+		/// devices are being used, this property is not guaranteed to stay 
+		/// the same for a specific Kinect device.
 		/// </summary>
-		public int DeviceID
+		public int DeviceIndex
+		{
+			get;
+			private set;
+		}
+		
+		/// <summary>
+		/// Gets the camera serial 'number' for this Kinect device. This 
+		/// is guaranteed to be the same between uses when using multiple 
+		/// devices.
+		/// </summary>
+		/// <value>
+		/// The camera serial.
+		/// </value>
+		public string CameraSerial
 		{
 			get;
 			private set;
@@ -144,26 +172,6 @@ namespace freenect
 		}
 		
 		/// <summary>
-		/// Gets or sets the enabled sub devices in the Kinect. This value 
-		/// can only be changed while the Kinect device hasn't been opened. Setting 
-		/// this value on a device that's already open has no effect on it.
-		/// </summary>
-		public SubDeviceOptions EnabledSubDevices
-		{
-			get
-			{
-				return this.enabledSubDevices;
-			}
-			set
-			{
-				if(this.IsOpen == false)
-				{
-					this.enabledSubDevices = value;
-				}
-			}
-		}
-		
-		/// <summary>
 		/// Gets or sets the name for this Kinect Device. 
 		/// </summary>
 		/// <remarks>
@@ -177,11 +185,6 @@ namespace freenect
 			get;
 			set;
 		}
-		
-		/// <summary>
-		/// Enabled subdevices
-		/// </summary>
-		private SubDeviceOptions enabledSubDevices = SubDeviceOptions.Motor | SubDeviceOptions.Camera | SubDeviceOptions.Audio;
 		
 		/// <summary>
 		/// Current logging level for the kinect session (for all devices)
@@ -200,43 +203,128 @@ namespace freenect
 		internal FreenectTiltState cachedDeviceState;
 		
 		/// <summary>
-		/// Constructor
+		/// Initialize some static stuff for the Kinect class.
 		/// </summary>
-		/// <param name="id">
-		/// ID of the Kinect Device. This is a value in the range [0, Kinect.DeviceCount - 1]
-		/// </param>
-		public Kinect(int id)
+		static Kinect()
 		{
-			// Make sure id is under  DeviceCount
-			if(id >= Kinect.DeviceCount)
-			{
-				throw new ArgumentOutOfRangeException("The device ID has to be in the range [0, Kinect.DeviceCount - 1]");
-			}
-			
-			// Store device ID for later
-			this.DeviceID = id;
+			Kinect.EnabledSubDevices = SubDeviceOptions.Audio | SubDeviceOptions.Camera | SubDeviceOptions.Motor;
 		}
 		
 		/// <summary>
-		/// Opens up the connection to this Kinect device
+		/// Ninja Constructor
 		/// </summary>
-		public void Open()
+		private Kinect()
+		{
+			
+		}
+		
+		/// <summary>
+		/// Open up a connection the Kinect with the specified ID. This also updates the 
+		/// set of enabled/disabled sub-devices.
+		/// </summary>
+		/// <param name='id'>
+		/// Index of Kinect to open.
+		/// </param>
+		/// <param name='enabledSubDevices'>
+		/// Sub-devices to enable before opening this device
+		/// </param>
+		public static Kinect Open(int id, SubDeviceOptions enabledSubDevices)
+		{
+			// Change enabled sub-devices preferences
+			Kinect.EnabledSubDevices = enabledSubDevices;
+			
+			// Open kinect connection
+			return Kinect.Open(id);
+		}
+		
+		/// <summary>
+		/// Opens up a connection to the Kinect with the specified ID
+		/// </summary>
+		public static Kinect Open(int id)
 		{			
 			// Select sub-devices
-			KinectNative.freenect_select_subdevices(KinectNative.Context, this.enabledSubDevices);
+			KinectNative.freenect_select_subdevices(KinectNative.Context, Kinect.EnabledSubDevices);
+			
+			// Create instance
+			Kinect k = new Kinect();
+			
+			// Save device-index
+			k.DeviceIndex = id;
 			
 			// Open device
-			int result = KinectNative.freenect_open_device(KinectNative.Context, ref this.devicePointer, this.DeviceID);
+			int result = KinectNative.freenect_open_device(KinectNative.Context, ref k.devicePointer, id);
 			if(result != 0)
 			{
-				throw new Exception("Could not open connection to Kinect Device (ID=" + this.DeviceID + "). Error Code = " + result);
+				throw new Exception("Could not open connection to Kinect Device (ID=" + k.DeviceIndex + "). Error Code = " + result);
 			}
 			
+			// Initialize rest of device (this is common regardless of how the Kinect was opened)
+			k.Initialize();
+			
+			// All done
+			return k;
+		}
+		
+		//// <summary>
+		/// Opens up a connection to the Kinect with the specified camera serial. This also 
+		/// updates the enabled sub-devices before opening the Kinect.
+		/// </summary>
+		/// <param name='cameraSerial'>
+		/// Camera serial.
+		/// </param>
+		/// <param name='enabledSubDevices'>
+		/// Enabled sub devices.
+		/// </param>
+		public static Kinect Open(string cameraSerial, SubDeviceOptions enabledSubDevices)
+		{
+			// Update enabled sub-devices 
+			Kinect.EnabledSubDevices = enabledSubDevices;
+			
+			// All done
+			return Kinect.Open(cameraSerial);
+		}
+		
+		/// <summary>
+		/// Opens up a connection to the Kinect with the specified camera serial
+		/// </summary>
+		/// <param name='cameraSerial'>
+		/// Camera serial.
+		/// </param>
+		public static Kinect Open(string cameraSerial)
+		{
+			// Select sub-devices
+			KinectNative.freenect_select_subdevices(KinectNative.Context, Kinect.EnabledSubDevices);
+			
+			// Create instance
+			Kinect k = new Kinect();
+			
+			// Save camera serial
+			k.CameraSerial = cameraSerial;
+			
+			// Open device
+			int result = KinectNative.freenect_open_device_by_camera_serial(KinectNative.Context, ref k.devicePointer, cameraSerial);
+			if(result != 0)
+			{
+				throw new Exception("Could not open connection to Kinect Device (Camera Serial=" + k.CameraSerial + "). Error Code = " + result);
+			}
+			
+			// Initialize rest of device (this is common regardless of how the Kinect was opened)
+			k.Initialize();
+			
+			// All done
+			return k;
+		}
+		
+		/// <summary>
+		/// Initialize sub-devices in this open Kinect device.
+		/// </summary>
+		private void Initialize()
+		{
 			// Create Accel, Motor and LED connections if MOTOR is enabled
 			this.Motor = null;
 			this.LED = null;
 			this.Accelerometer = null;
-			if(this.enabledSubDevices.HasFlag(SubDeviceOptions.Motor))
+			if(Kinect.EnabledSubDevices.HasFlag(SubDeviceOptions.Motor))
 			{
 				this.LED = new LED(this);
 				this.Accelerometer = new Accelerometer(this);
@@ -246,7 +334,7 @@ namespace freenect
 			// Create camera connections if CAMERA is enabled
 			this.VideoCamera = null;
 			this.DepthCamera = null;
-			if(this.enabledSubDevices.HasFlag(SubDeviceOptions.Camera))
+			if(Kinect.EnabledSubDevices.HasFlag(SubDeviceOptions.Camera))
 			{
 				this.VideoCamera = new VideoCamera(this);
 				this.DepthCamera = new DepthCamera(this);
@@ -265,7 +353,7 @@ namespace freenect
 		public void Close()
 		{
 			// Stop Cameras
-			if(this.EnabledSubDevices.HasFlag(SubDeviceOptions.Camera))
+			if(Kinect.EnabledSubDevices.HasFlag(SubDeviceOptions.Camera))
 			{
 				if(this.VideoCamera.IsRunning)
 				{
@@ -281,7 +369,7 @@ namespace freenect
 			int result = KinectNative.freenect_close_device(this.devicePointer);
 			if(result != 0)
 			{
-				throw new Exception("Could not close connection to Kinect Device (ID=" + this.DeviceID + "). Error Code = " + result);
+				throw new Exception("Could not close connection to Kinect Device (ID=" + this.DeviceIndex + "). Error Code = " + result);
 			}
 			
 			// Dispose of child instances
@@ -306,7 +394,7 @@ namespace freenect
 		public void UpdateStatus()
 		{
 			// Only try to update status if the motor device is actually enabled/open
-			if(this.EnabledSubDevices.HasFlag(SubDeviceOptions.Motor))
+			if(Kinect.EnabledSubDevices.HasFlag(SubDeviceOptions.Motor))
 			{
 				// Ask for new device status
 				KinectNative.freenect_update_tilt_state(this.devicePointer);
@@ -315,6 +403,43 @@ namespace freenect
 				IntPtr ptr = KinectNative.freenect_get_tilt_state(this.devicePointer);
 				this.cachedDeviceState = (FreenectTiltState)Marshal.PtrToStructure(ptr, typeof(FreenectTiltState));
 			}
+		}
+		
+		/// <summary>
+		/// Gets information for all available Kinect devices on the USB chain.
+		/// </summary>
+		/// <returns>
+		/// Array of device info instances
+		/// </returns>
+		public static DeviceInfo[] GetDevices()
+		{
+			IntPtr deviceInfoList = IntPtr.Zero;
+			List<DeviceInfo> devices = new List<DeviceInfo>();
+			
+			// Get linked list pointer
+			KinectNative.freenect_list_device_attributes(KinectNative.Context, out deviceInfoList);
+			
+			// Get the first device at the head of the list
+			IntPtr deviceInfoPointer = deviceInfoList;
+			
+			// Go through the linked list as long as the current device pointer isn't "null"
+			while(deviceInfoPointer != IntPtr.Zero)
+			{			
+				// Marshall into native version of struct
+				DeviceInfoNative nativeInfo = (DeviceInfoNative)Marshal.PtrToStructure(deviceInfoList, typeof(DeviceInfoNative));
+				
+				// Add new managed version to our list
+				devices.Add(new DeviceInfo(nativeInfo.serial));
+				
+				// Look at the child/next item in the list for next iteration
+				deviceInfoPointer = nativeInfo.next;
+			}
+			
+			// Free pointer
+			KinectNative.freenect_free_device_attributes(deviceInfoList);
+			
+			// All done
+			return devices.ToArray();
 		}
 		
 		/// <summary>
@@ -389,7 +514,17 @@ namespace freenect
 		{
 			Kinect realDevice = KinectNative.GetDevice(device);
 			Kinect.Log(null, new LogEventArgs(realDevice, logLevel, message));
-		}		
+		}
+		
+		/// <summary>
+		/// Native device info struct to marshal in data
+		/// </summary>
+		private struct DeviceInfoNative
+		{
+			public IntPtr next;
+			[MarshalAs(UnmanagedType.LPStr)]
+			public string serial;
+		}
 	}
 }
 
