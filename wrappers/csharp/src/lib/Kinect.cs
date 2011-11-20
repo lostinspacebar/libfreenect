@@ -54,6 +54,28 @@ namespace freenect
 		}
 		
 		/// <summary>
+		/// Gets number of Kinect devices connected
+		/// </summary>
+		public static int DeviceCount
+		{
+			get
+			{
+				return Kinect.GetDeviceCount();
+			}
+		}
+		
+		/// <summary>
+		/// Gets the sub-devices supported by the Kinect
+		/// </summary>
+		public static SubDeviceOptions SupportedSubDevices
+		{
+			get
+			{
+				return KinectNative.freenect_supported_subdevices();
+			}
+		}
+		
+		/// <summary>
 		/// Raised when a log item is received from the low level Kinect library.
 		/// </summary>
 		public static event LogEventHandler Log = delegate { };
@@ -126,7 +148,7 @@ namespace freenect
 		/// can only be changed while the Kinect device hasn't been opened. Setting 
 		/// this value on a device that's already open has no effect on it.
 		/// </summary>
-		public SubDevice EnabledSubDevices
+		public SubDeviceOptions EnabledSubDevices
 		{
 			get
 			{
@@ -159,7 +181,7 @@ namespace freenect
 		/// <summary>
 		/// Enabled subdevices
 		/// </summary>
-		private SubDevice enabledSubDevices = SubDevice.Motor | SubDevice.Camera | SubDevice.Audio;
+		private SubDeviceOptions enabledSubDevices = SubDeviceOptions.Motor | SubDeviceOptions.Camera | SubDeviceOptions.Audio;
 		
 		/// <summary>
 		/// Current logging level for the kinect session (for all devices)
@@ -195,22 +217,11 @@ namespace freenect
 			this.DeviceID = id;
 		}
 		
-		/// <value>
-		/// Gets number of Kinect devices connected
-		/// </value>
-		public static int DeviceCount
-		{
-			get
-			{
-				return Kinect.GetDeviceCount();
-			}
-		}
-		
 		/// <summary>
 		/// Opens up the connection to this Kinect device
 		/// </summary>
 		public void Open()
-		{
+		{			
 			// Select sub-devices
 			KinectNative.freenect_select_subdevices(KinectNative.Context, this.enabledSubDevices);
 			
@@ -225,7 +236,7 @@ namespace freenect
 			this.Motor = null;
 			this.LED = null;
 			this.Accelerometer = null;
-			if(this.enabledSubDevices.HasFlag(SubDevice.Motor))
+			if(this.enabledSubDevices.HasFlag(SubDeviceOptions.Motor))
 			{
 				this.LED = new LED(this);
 				this.Accelerometer = new Accelerometer(this);
@@ -235,7 +246,7 @@ namespace freenect
 			// Create camera connections if CAMERA is enabled
 			this.VideoCamera = null;
 			this.DepthCamera = null;
-			if(this.enabledSubDevices.HasFlag(SubDevice.Camera))
+			if(this.enabledSubDevices.HasFlag(SubDeviceOptions.Camera))
 			{
 				this.VideoCamera = new VideoCamera(this);
 				this.DepthCamera = new DepthCamera(this);
@@ -254,7 +265,7 @@ namespace freenect
 		public void Close()
 		{
 			// Stop Cameras
-			if(this.EnabledSubDevices.HasFlag(SubDevice.Camera))
+			if(this.EnabledSubDevices.HasFlag(SubDeviceOptions.Camera))
 			{
 				if(this.VideoCamera.IsRunning)
 				{
@@ -295,7 +306,7 @@ namespace freenect
 		public void UpdateStatus()
 		{
 			// Only try to update status if the motor device is actually enabled/open
-			if(this.EnabledSubDevices.HasFlag(SubDevice.Motor))
+			if(this.EnabledSubDevices.HasFlag(SubDeviceOptions.Motor))
 			{
 				// Ask for new device status
 				KinectNative.freenect_update_tilt_state(this.devicePointer);
@@ -313,6 +324,18 @@ namespace freenect
 		public static void ProcessEvents()
 		{
 			KinectNative.freenect_process_events(KinectNative.Context);
+		}
+		
+		/// <summary>
+		/// Makes the base library handle any pending USB events with a specified timeout.
+		/// Either this, or UpdateStatus should be called repeatedly.
+		/// </summary>
+		public static void ProcessEvents(int seconds, int microSeconds = 0)
+		{
+			Timeval timeval = new Timeval();
+			timeval.tv_sec = seconds;
+			timeval.tv_usec = microSeconds;
+			KinectNative.freenect_process_events_timeout(KinectNative.Context, ref timeval);
 		}
 		
 		/// <summary>

@@ -170,7 +170,8 @@ namespace freenect
 	/// <summary>
 	/// Sub-device in the Kinect device.
 	/// </summary>
-	public enum SubDevice : int
+	[FlagsAttribute]
+	public enum SubDeviceOptions : int
 	{
 		/// <summary>
 		/// The motor sub-device. This also includes the LED and Accelerometer

@@ -176,10 +176,16 @@ namespace freenect
 		public static extern int freenect_process_events(IntPtr context);
 		
 		[DllImport("freenect", CallingConvention=CallingConvention.Cdecl)]
+		public static extern int freenect_process_events_timeout(IntPtr context, ref Timeval timeout);
+		
+		[DllImport("freenect", CallingConvention=CallingConvention.Cdecl)]
 		public static extern int freenect_num_devices(IntPtr context);
 		
 		[DllImport("freenect", CallingConvention=CallingConvention.Cdecl)]
-		public static extern int freenect_select_subdevices(IntPtr context, SubDevice sub_device_flags);
+		public static extern SubDeviceOptions freenect_supported_subdevices();
+		
+		[DllImport("freenect", CallingConvention=CallingConvention.Cdecl)]
+		public static extern int freenect_select_subdevices(IntPtr context, SubDeviceOptions sub_device_flags);
 		
 		[DllImport("freenect", CallingConvention=CallingConvention.Cdecl)]
 		public static extern int freenect_open_device(IntPtr context, ref IntPtr device, int index);
@@ -301,6 +307,16 @@ namespace freenect
 		public Int16 			AccelerometerZ;
 		public SByte  			TiltAngle;
 		public MotorTiltStatus  TiltStatus;
+	}
+	
+	/// <summary>
+	/// Timeval struct to mirror the C-native one.
+	/// </summary>
+	[StructLayout(LayoutKind.Sequential)]
+	internal struct Timeval
+	{
+		public long tv_sec;
+		public long tv_usec;
 	}
 	
 	/// <summary>

@@ -308,7 +308,6 @@ namespace KinectDemo
 				int dim 		= this.DepthMode.Width * this.DepthMode.Height;
 				int i 			= 0;
 				UInt16 pval		= 0;
-				UInt16 lb 		= 0;
 				for (i = 0; i < dim; i++)
 				{
 					pval		= ptrBack[i];

@@ -68,10 +68,20 @@ namespace KinectDemo
 			this.statusUpdateTimer.Interval = 1000;
 			this.statusUpdateTimer.Tick += this.HandleStatusUpdateTimerTick;
 			
-			Kinect.LogLevel = LoggingLevel.Debug;
-			Kinect.Log += delegate(object sender, LogEventArgs e) {
-				//Console.WriteLine("[" + e.LogLevel.ToString().ToUpper() + "]" + e.Timestamp.ToString() + "\n" + e.Message + "\n");
-			};
+			// Check what sub-devices are available
+			SubDeviceOptions subdevices = Kinect.SupportedSubDevices;
+			if(subdevices.HasFlag(SubDeviceOptions.Camera))
+			{
+				this.enableCameraCheckbox.Enabled = this.enableCameraCheckbox.Checked = true;	
+			}
+			if(subdevices.HasFlag(SubDeviceOptions.Motor))
+			{
+				this.enableMotorCheckbox.Enabled = this.enableMotorCheckbox.Checked = true;	
+			}
+			if(subdevices.HasFlag(SubDeviceOptions.Audio))
+			{
+				this.enableAudioCheckbox.Enabled = this.enableAudioCheckbox.Checked = true;	
+			}
 			
 			// Update device list
 			this.UpdateDeviceList();
@@ -170,18 +180,18 @@ namespace KinectDemo
 			this.kinect = new Kinect(deviceID);
 			
 			// Set sub-device flags
-			SubDevice subdevices = default(SubDevice);
-			if(this.enableMotorCheckbox.Checked)
+			SubDeviceOptions subdevices = default(SubDeviceOptions);
+			if(this.enableMotorCheckbox.Enabled && this.enableMotorCheckbox.Checked)
 			{
-				subdevices |= SubDevice.Motor;
+				subdevices |= SubDeviceOptions.Motor;
 			}
-			if(this.enableAudioCheckbox.Checked)
+			if(this.enableAudioCheckbox.Enabled && this.enableAudioCheckbox.Checked)
 			{
-				subdevices |= SubDevice.Audio;
+				subdevices |= SubDeviceOptions.Audio;
 			}
-			if(this.enableCameraCheckbox.Checked)
+			if(this.enableCameraCheckbox.Enabled && this.enableCameraCheckbox.Checked)
 			{
-				subdevices |= SubDevice.Camera;
+				subdevices |= SubDeviceOptions.Camera;
 			}
 			this.kinect.EnabledSubDevices = subdevices;
 			
@@ -189,7 +199,7 @@ namespace KinectDemo
 			this.kinect.Open();
 			
 			// Setup image handlers if cameras are enabled
-			if(this.kinect.EnabledSubDevices.HasFlag(SubDevice.Camera))
+			if(this.kinect.EnabledSubDevices.HasFlag(SubDeviceOptions.Camera))
 			{
 				this.kinect.VideoCamera.DataReceived += HandleKinectVideoCameraDataReceived;
 				this.kinect.DepthCamera.DataReceived += HandleKinectDepthCameraDataReceived;
@@ -206,7 +216,7 @@ namespace KinectDemo
 			}
 			
 			// Init LED, Motor control UI only if motor device is enabled
-			if(this.kinect.EnabledSubDevices.HasFlag(SubDevice.Motor))
+			if(this.kinect.EnabledSubDevices.HasFlag(SubDeviceOptions.Motor))
 			{
 				this.motorTiltUpDown.Enabled = true;
 				this.motorTiltUpDown.Value = 0;
@@ -345,7 +355,7 @@ namespace KinectDemo
 		/// </param>
 		private void HandleStatusUpdateTimerTick (object sender, EventArgs e)
 		{
-			if(this.kinect.EnabledSubDevices.HasFlag(SubDevice.Motor))
+			if(this.kinect.EnabledSubDevices.HasFlag(SubDeviceOptions.Motor))
 			{
 				this.motorCurrentTiltLabel.Text = "Current Tilt: " + this.kinect.Motor.Tilt;
 				this.motorTiltStatusLabel.Text = "Tilt Status: " + this.kinect.Motor.TiltStatus.ToString();
@@ -368,7 +378,7 @@ namespace KinectDemo
 		/// </param>
 		private void HandleSelectLEDColorComboSelectedIndexChanged (object sender, EventArgs e)
 		{
-			if(this.kinect.EnabledSubDevices.HasFlag(SubDevice.Motor))
+			if(this.kinect.EnabledSubDevices.HasFlag(SubDeviceOptions.Motor))
 			{
 				this.kinect.LED.Color = (LEDColor)Enum.Parse(typeof(LEDColor), this.selectLEDColorCombo.SelectedItem.ToString());
 			}
@@ -385,7 +395,7 @@ namespace KinectDemo
 		/// </param>
 		private void HandleMotorTiltUpDownValueChanged (object sender, EventArgs e)
 		{
-			if(this.kinect.EnabledSubDevices.HasFlag(SubDevice.Motor))
+			if(this.kinect.EnabledSubDevices.HasFlag(SubDeviceOptions.Motor))
 			{
 				this.kinect.Motor.Tilt = (double)this.motorTiltUpDown.Value;
 			}

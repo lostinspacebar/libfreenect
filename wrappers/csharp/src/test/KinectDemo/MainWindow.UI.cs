@@ -293,7 +293,8 @@ namespace KinectDemo
 			this.enableMotorCheckbox = new CheckBox();
 			this.enableMotorCheckbox.Text = "Enable Motor";
 			this.enableMotorCheckbox.Margin = new Padding(3, 7, 0, 0);
-			this.enableMotorCheckbox.Checked = true;
+			this.enableMotorCheckbox.Checked = false;
+			this.enableMotorCheckbox.Enabled = false;
 			
 			///
 			/// enableCameraCheckbox
@@ -303,7 +304,8 @@ namespace KinectDemo
 			this.enableCameraCheckbox.AutoSize = true;
 			this.enableCameraCheckbox.Margin = new Padding(3, 7, 0, 0);
 			this.enableCameraCheckbox.Padding = new Padding(0, 3, 0, 0);
-			this.enableCameraCheckbox.Checked = true;
+			this.enableCameraCheckbox.Checked = false;
+			this.enableCameraCheckbox.Enabled = false;
 			
 			///
 			/// enableAudioCheckbox
@@ -311,7 +313,8 @@ namespace KinectDemo
 			this.enableAudioCheckbox = new CheckBox();
 			this.enableAudioCheckbox.Text = "Enable Audio";
 			this.enableAudioCheckbox.Margin = new Padding(3, 7, 0, 0);
-			this.enableAudioCheckbox.Checked = true;
+			this.enableAudioCheckbox.Checked = false;
+			this.enableAudioCheckbox.Enabled = false;
 			
 			///
 			/// selectDeviceCombo
