@@ -274,6 +274,7 @@ namespace freenect
 		[DllImport("freenect", CallingConvention=CallingConvention.Cdecl)]
 		public static extern int freenect_set_depth_mode(IntPtr device, FreenectFrameMode mode);
 		
+		
 	}
 	
 	/// <summary>
@@ -329,6 +330,20 @@ namespace freenect
 	}
 	
 	/// <summary>
+	/// Native data for a single 5.1 16-bit audio sample.
+	/// </summary>
+	[StructLayout(LayoutKind.Sequential)]
+	internal struct FreenectAudioSample
+	{
+		Int16 left;
+		Int16 right;
+		Int16 center;
+		Int16 lfe;
+		Int16 surround_left;
+		Int16 surround_right;
+	}
+	
+	/// <summary>
 	/// "Native" callback for freelect library logging
 	/// </summary>
 	[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
@@ -339,4 +354,22 @@ namespace freenect
 	/// </summary>
 	[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
 	public delegate void FreenectCameraDataCallback(IntPtr device, IntPtr data, UInt32 timestamp);
+	
+	/// <summary>
+	/// "Native" callback for receiving audio data from the 4 microphones.
+	/// </summary>
+	[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+	public delegate void FreenectAudioInCallback(IntPtr device, int num_samples,
+												 IntPtr mic1, 
+												 IntPtr mic2, 
+												 IntPtr mic3, 
+												 IntPtr mic4,
+												 IntPtr cancelled, 
+												 IntPtr unknown);
+	
+	/// <summary>
+	/// "Native callback for setting output audio data for noise-cancellation features on the Kinect
+	/// </summary>
+	[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+	public delegate void FreenectAudioOutCallback(IntPtr device, FreenectAudioSample[] samples, out int sample_count);
 }
